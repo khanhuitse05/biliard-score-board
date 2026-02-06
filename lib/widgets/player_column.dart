@@ -79,40 +79,37 @@ class PlayerColumn extends StatelessWidget {
             Text(
               player.name,
               maxLines: 1,
-              style: const TextStyle(color: Colors.white, fontSize: 24),
+              style: const TextStyle(color: Colors.white, fontSize: 28),
             ),
-            const SizedBox(height: 16),
             Container(
-              height: 100,
               alignment: Alignment.center,
               child: AutoSizeText(
                 '$score',
-                style: const TextStyle(color: Colors.white, fontSize: 100),
+                style: const TextStyle(color: Colors.white, fontSize: 70),
                 maxLines: 1,
                 minFontSize: 24,
-                maxFontSize: 100,
+                maxFontSize: 70,
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 12),
             if (lastDeltaText != null)
               Container(
-                height: 28,
+                height: 24,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: (lastDelta >0?  Colors.green : Colors.red).withValues(alpha: 0.7),
                   ),
                 ),
                 child: Text(
                   lastDeltaText,
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
               )
             else
-              SizedBox(height: 28),
+              SizedBox(height: 24),
           ],
         ),
       ),
