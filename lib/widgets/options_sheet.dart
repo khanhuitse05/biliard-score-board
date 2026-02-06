@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-class OptionsSheet extends StatelessWidget {
+class OptionsSheet extends StatefulWidget {
   const OptionsSheet({
     super.key,
     required this.onResetMatch,
@@ -11,6 +12,12 @@ class OptionsSheet extends StatelessWidget {
   final VoidCallback onResetMatch;
   final VoidCallback onNewMatch;
   final VoidCallback onShowHistory;
+
+  @override
+  State<OptionsSheet> createState() => _OptionsSheetState();
+}
+
+class _OptionsSheetState extends State<OptionsSheet> {
 
   @override
   Widget build(BuildContext context) {
@@ -33,24 +40,27 @@ class OptionsSheet extends StatelessWidget {
               leading: const Icon(Icons.restart_alt),
               title: const Text('Reset match'),
               onTap: () {
+                HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
-                onResetMatch();
+                widget.onResetMatch();
               },
             ),
             ListTile(
               leading: const Icon(Icons.add),
               title: const Text('New match'),
               onTap: () {
+                HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
-                onNewMatch();
+                widget.onNewMatch();
               },
             ),
             ListTile(
               leading: const Icon(Icons.history),
               title: const Text('Show history'),
               onTap: () {
+                HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
-                onShowHistory();
+                widget.onShowHistory();
               },
             ),
           ],

@@ -7,6 +7,7 @@ import '../models/match.dart';
 import 'match_board_state.dart';
 
 const _storageKey = 'matches';
+const int maxMatchHistory = 20;
 
 class MatchBoardCubit extends Cubit<MatchBoardState> {
   MatchBoardCubit() : super(const MatchBoardState(matches: []));
@@ -20,6 +21,11 @@ class MatchBoardCubit extends Cubit<MatchBoardState> {
       matches = decoded
           .map((e) => MatchModel.fromJson(e as Map<String, dynamic>))
           .toList();
+    }
+    // Trim to last 20 matches if needed
+    if (matches.length > maxMatchHistory) {
+      matches = matches.sublist(matches.length - maxMatchHistory);
+      await _save(matches);
     }
     if (matches.isEmpty) {
       final defaultMatch = MatchModel.createDefault();
@@ -36,8 +42,12 @@ class MatchBoardCubit extends Cubit<MatchBoardState> {
 
   Future<void> _save(List<MatchModel> matches) async {
     final prefs = await SharedPreferences.getInstance();
+    // Keep only the last 20 matches
+    final trimmedMatches = matches.length > maxMatchHistory
+        ? matches.sublist(matches.length - maxMatchHistory)
+        : matches;
     final encoded =
-        jsonEncode(matches.map((m) => m.toJson()).toList(growable: false));
+        jsonEncode(trimmedMatches.map((m) => m.toJson()).toList(growable: false));
     await prefs.setString(_storageKey, encoded);
   }
 

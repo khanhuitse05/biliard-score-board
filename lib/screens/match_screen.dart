@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubit/match_board_cubit.dart';
@@ -10,6 +11,7 @@ import '../models/round.dart';
 import '../widgets/add_player_sheet.dart';
 import '../widgets/options_sheet.dart';
 import '../widgets/player_column.dart';
+import '../widgets/reset_match_dialog.dart';
 import '../widgets/round_history_sheet.dart';
 
 class MatchScreen extends StatelessWidget {
@@ -89,8 +91,12 @@ class _MatchContent extends StatelessWidget {
     return 0;
   }
 
-  void _resetMatch(BuildContext context) {
-    _update(context, match.copyWith(rounds: []));
+  Future<void> _resetMatch(BuildContext context) async {
+    final confirmed = await ResetMatchDialog.show(context);
+
+    if (confirmed == true && context.mounted) {
+      _update(context, match.copyWith(rounds: []));
+    }
   }
 
   Future<void> _startNewMatch(BuildContext context) async {
@@ -239,7 +245,10 @@ class _MatchContent extends StatelessWidget {
 
   GestureDetector _roundButton(BuildContext context) {
     return GestureDetector(
-      onTap: () => _showRoundHistory(context),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _showRoundHistory(context);
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
         decoration: BoxDecoration(
@@ -264,7 +273,10 @@ class _MatchContent extends StatelessWidget {
   }) {
     const double size = 48;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
       child: Container(
         width: size,
         height: size,

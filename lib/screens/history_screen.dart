@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../models/match.dart';
@@ -37,6 +38,7 @@ class HistoryScreen extends StatelessWidget {
             subtitle: Text(_summaryForMatch(match)),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
+              HapticFeedback.selectionClick();
               Navigator.of(context).pop(match);
             },
           );

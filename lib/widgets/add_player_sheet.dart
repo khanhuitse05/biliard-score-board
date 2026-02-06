@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/match.dart';
 import '../models/player.dart';
@@ -110,12 +111,19 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
             spacing: 8,
             runSpacing: 8,
             children: defaultPlayerNames.map((name) {
+              // Check if this name is already used by another player
+              final isNameTaken = widget.match.players.any(
+                (p) => p.name == name && (_isEdit ? p.id != widget.player!.id : true),
+              );
               return ActionChip(
                 label: Text(name),
-                onPressed: () {
-                  _nameController.text = name;
-                  _submit();
-                },
+                onPressed: isNameTaken
+                    ? null
+                    : () {
+                        HapticFeedback.selectionClick();
+                        _nameController.text = name;
+                        _submit();
+                      },
               );
             }).toList(),
           ),
@@ -126,6 +134,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               if (_isEdit && widget.onRemove != null)
                 TextButton(
                   onPressed: () {
+                    HapticFeedback.mediumImpact();
                     final updated = widget.match.copyWith(
                       players: List.from(widget.match.players)
                         ..removeWhere((p) => p.id == widget.player!.id),
@@ -144,14 +153,20 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
                 spacing: 16,
                 children: [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      Navigator.of(context).pop();
+                    },
                     child: const Text('Cancel'),
                   ),
                   FilledButton(
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 48),
                     ),
-                    onPressed: _submit,
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      _submit();
+                    },
                     child: Text(_isEdit ? 'Save' : 'Add'),
                   ),
                 ],

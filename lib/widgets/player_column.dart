@@ -1,9 +1,10 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/player.dart';
 
-class PlayerColumn extends StatelessWidget {
+class PlayerColumn extends StatefulWidget {
   const PlayerColumn({
     super.key,
     required this.player,
@@ -20,6 +21,12 @@ class PlayerColumn extends StatelessWidget {
   final VoidCallback onTapPlus;
   final ValueChanged<int> onSwipeDelta;
   final VoidCallback onLongPress;
+
+  @override
+  State<PlayerColumn> createState() => _PlayerColumnState();
+}
+
+class _PlayerColumnState extends State<PlayerColumn> {
 
   Color _lighten(Color color, double amount) {
     final hsl = HSLColor.fromColor(color);
@@ -41,10 +48,18 @@ class PlayerColumn extends StatelessWidget {
     return hsl.withHue(newHue).toColor();
   }
 
+  void _handleTap() {
+    // Trigger haptics immediately
+    HapticFeedback.lightImpact();
+    
+    // Trigger score change
+    widget.onTapPlus();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Create gradient similar to Tailwind: from-500 via-600 to-complementary
-    final baseColor = player.color;
+    final baseColor = widget.player.color;
     final fromColor = _lighten(baseColor, 0.15); // Lighter start (like -500)
     final viaColor = _darken(baseColor, 0.1); // Darker middle (like -600)
     final toColor = _shiftHue(baseColor, 30); // Shift hue for complementary end
@@ -56,19 +71,23 @@ class PlayerColumn extends StatelessWidget {
       stops: const [0.0, 0.5, 1.0],
     );
 
-    final lastDeltaText = lastDelta == 0
+    final lastDeltaText = widget.lastDelta == 0
         ? null
-        : (lastDelta > 0 ? '+$lastDelta' : '$lastDelta');
+        : (widget.lastDelta > 0 ? '+${widget.lastDelta}' : '${widget.lastDelta}');
 
     return GestureDetector(
-      onTap: onTapPlus,
-      onLongPress: onLongPress,
+      onTap: _handleTap,
+      onLongPress: widget.onLongPress,
       onVerticalDragEnd: (details) {
         final velocity = details.primaryVelocity ?? 0;
         if (velocity < 0) {
-          onSwipeDelta(1);
+          // Swipe up - increase score
+          HapticFeedback.lightImpact();
+          widget.onSwipeDelta(1);
         } else if (velocity > 0) {
-          onSwipeDelta(-1);
+          // Swipe down - decrease score
+          HapticFeedback.mediumImpact();
+          widget.onSwipeDelta(-1);
         }
       },
       child: Container(
@@ -77,14 +96,14 @@ class PlayerColumn extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              player.name,
+              widget.player.name,
               maxLines: 1,
               style: const TextStyle(color: Colors.white, fontSize: 28),
             ),
             Container(
               alignment: Alignment.center,
               child: AutoSizeText(
-                '$score',
+                '${widget.score}',
                 style: const TextStyle(color: Colors.white, fontSize: 70),
                 maxLines: 1,
                 minFontSize: 24,
@@ -100,7 +119,7 @@ class PlayerColumn extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: (lastDelta >0?  Colors.green : Colors.red).withValues(alpha: 0.7),
+                    color: (widget.lastDelta > 0 ? Colors.green : Colors.red).withValues(alpha: 0.7),
                   ),
                 ),
                 child: Text(
@@ -109,7 +128,7 @@ class PlayerColumn extends StatelessWidget {
                 ),
               )
             else
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
           ],
         ),
       ),
