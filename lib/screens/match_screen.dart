@@ -9,6 +9,7 @@ import '../models/match.dart';
 import '../models/player.dart';
 import '../models/round.dart';
 import '../widgets/add_player_sheet.dart';
+import '../widgets/lock_toast.dart';
 import '../widgets/options_sheet.dart';
 import '../widgets/player_column.dart';
 import '../widgets/reset_match_dialog.dart';
@@ -62,7 +63,10 @@ class _MatchContentState extends State<_MatchContent> {
   }
 
   void _changeScore(BuildContext context, Player player, int delta) {
-    if (_isLocked) return;
+    if (_isLocked) {
+      showLockToast(context);
+      return;
+    }
     final rounds = List<RoundModel>.from(match.rounds);
     RoundModel current;
     if (rounds.isEmpty) {
@@ -84,7 +88,11 @@ class _MatchContentState extends State<_MatchContent> {
       entries.add(RoundEntry(playerId: player.id, delta: delta));
     }
 
-    final updatedRound = RoundModel(index: current.index, entries: entries, createdAt: current.createdAt);
+    final updatedRound = RoundModel(
+      index: current.index,
+      entries: entries,
+      createdAt: current.createdAt,
+    );
     rounds[rounds.length - 1] = updatedRound;
 
     _update(context, match.copyWith(rounds: rounds));
@@ -109,12 +117,17 @@ class _MatchContentState extends State<_MatchContent> {
     if (roundTotal != 0) return;
 
     // Only advance if at least one player had a non-zero delta
-    final somePlayerScored = currentMatch.players
-        .any((p) => lastRound.totalForPlayer(p.id) != 0);
+    final somePlayerScored = currentMatch.players.any(
+      (p) => lastRound.totalForPlayer(p.id) != 0,
+    );
     if (!somePlayerScored) return;
 
     final nextIndex = lastRound.index + 1;
-    final newRound = RoundModel(index: nextIndex, entries: [], createdAt: DateTime.now());
+    final newRound = RoundModel(
+      index: nextIndex,
+      entries: [],
+      createdAt: DateTime.now(),
+    );
     _update(context, currentMatch.copyWith(rounds: [...rounds, newRound]));
 
     // Auto-lock after round auto-advances
@@ -187,6 +200,10 @@ class _MatchContentState extends State<_MatchContent> {
   }
 
   void _openPlayerSheet(BuildContext context, {Player? player}) {
+    if (_isLocked && player != null) {
+      showLockToast(context);
+      return;
+    }
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -205,7 +222,9 @@ class _MatchContentState extends State<_MatchContent> {
   void _showOptionsSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) => OptionsSheet(
+        onAddPlayer: () => _openPlayerSheet(context),
         onResetMatch: () => _resetMatch(context),
         onNewMatch: () => _startNewMatch(context),
         onShowHistory: widget.onOpenHistory,
@@ -220,9 +239,9 @@ class _MatchContentState extends State<_MatchContent> {
       lastDelta: _badgeDeltaFor(player.id),
       isRoundInvalid: _isRoundInvalid,
       locked: _isLocked,
-      onTapPlus: _isLocked ? null : () => _changeScore(context, player, 1),
-      onSwipeDelta: _isLocked ? null : (delta) => _changeScore(context, player, delta),
-      onLongPress: _isLocked ? null : () => _openPlayerSheet(context, player: player),
+      onTapPlus: () => _changeScore(context, player, 1),
+      onSwipeDelta: (delta) => _changeScore(context, player, delta),
+      onLongPress: () => _openPlayerSheet(context, player: player),
     );
   }
 
@@ -233,7 +252,7 @@ class _MatchContentState extends State<_MatchContent> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: players.length <= 4
+            child: players.length < 4
                 ? Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -272,7 +291,7 @@ class _MatchContentState extends State<_MatchContent> {
                     ],
                   ),
           ),
-           Positioned.fill(
+          Positioned.fill(
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(8),
@@ -286,12 +305,10 @@ class _MatchContentState extends State<_MatchContent> {
                           roundIndex: _currentRoundIndex,
                           resetTrigger: _countdownResetTrigger,
                           isRoundValid: !_isRoundInvalid,
-                          onTap: _isLocked
-                              ? () {}
-                              : () {
-                                  HapticFeedback.selectionClick();
-                                  _showRoundHistory(context);
-                                },
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            _showRoundHistory(context);
+                          },
                           onCountdownComplete: _onCountdownComplete,
                         ),
                         _lockButton(),
@@ -302,14 +319,12 @@ class _MatchContentState extends State<_MatchContent> {
                       children: [
                         _circleIconButton(
                           icon: Icons.more_vert,
-                          onTap:
-                              _isLocked ? () {} : () => _showOptionsSheet(context),
+                          onTap: () => _showOptionsSheet(context),
                         ),
-                        _circleIconButton(
-                          icon: Icons.add,
-                          onTap:
-                              _isLocked ? () {} : () => _openPlayerSheet(context),
-                        ),
+                        // _circleIconButton(
+                        //   icon: Icons.add,
+                        //   onTap: () => _openPlayerSheet(context),
+                        // ),
                       ],
                     ),
                   ],

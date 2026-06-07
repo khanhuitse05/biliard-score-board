@@ -107,12 +107,16 @@ class _PlayerColumnState extends State<PlayerColumn>
 
     final lastDeltaText = widget.lastDelta == 0
         ? null
-        : (widget.lastDelta > 0 ? '+${widget.lastDelta}' : '${widget.lastDelta}');
+        : (widget.lastDelta > 0
+              ? '+${widget.lastDelta}'
+              : '${widget.lastDelta}');
 
     // When round is invalid, always show red; otherwise green/positive red/negative
     final badgeBorderColor = widget.isRoundInvalid
         ? Colors.red
-        : (widget.lastDelta > 0 ? Colors.green : Colors.red).withValues(alpha: 0.7);
+        : (widget.lastDelta > 0 ? Colors.green : Colors.red).withValues(
+            alpha: 0.7,
+          );
 
     return GestureDetector(
       onTap: _handleTap,
@@ -131,50 +135,74 @@ class _PlayerColumnState extends State<PlayerColumn>
             },
       child: Container(
         decoration: BoxDecoration(gradient: gradient),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            Text(
-              widget.player.name,
-              maxLines: 1,
-              style: const TextStyle(color: Colors.white, fontSize: 28),
-            ),
-            Container(
-              alignment: Alignment.center,
-              child: AutoSizeText(
-                '${widget.score}',
-                style: const TextStyle(color: Colors.white, fontSize: 70),
-                maxLines: 1,
-                minFontSize: 24,
-                maxFontSize: 70,
-                textAlign: TextAlign.center,
+            Align(
+              alignment: Alignment(0.0, 0.6),
+              child: Transform.rotate(
+                angle: -10 * (3.141592653589793 / 180), // 45 degrees in radians
+                child: Text(
+                  widget.player.name,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: Colors.white.withAlpha(100),
+                    fontSize: 70,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
             if (lastDeltaText != null)
-              AnimatedBuilder(
-                animation: _flickerAnimation,
-                builder: (context, child) {
-                  return Opacity(
-                    opacity: widget.isRoundInvalid ? _flickerAnimation.value : 1.0,
-                    child: child,
-                  );
-                },
-                child: Container(
-                  height: 24,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: badgeBorderColor),
-                  ),
-                  child: Text(
-                    lastDeltaText,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
+              Positioned(
+                right: 8,
+                bottom: 8,
+                child: AnimatedBuilder(
+                  animation: _flickerAnimation,
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: widget.isRoundInvalid
+                          ? _flickerAnimation.value
+                          : 1.0,
+                      child: child,
+                    );
+                  },
+                  child: Container(
+                    height: 35,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: badgeBorderColor),
+                    ),
+                    child: Text(
+                      lastDeltaText,
+                      style: const TextStyle(color: Colors.white, fontSize: 25),
+                    ),
                   ),
                 ),
-              )
-            else
-              const SizedBox(height: 24),
+              ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  alignment: Alignment.center,
+                  child: AutoSizeText(
+                    '${widget.score}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 90,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    minFontSize: 24,
+                    maxFontSize: 90,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+              ],
+            ),
           ],
         ),
       ),

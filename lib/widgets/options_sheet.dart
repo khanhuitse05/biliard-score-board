@@ -4,11 +4,13 @@ import 'package:flutter/services.dart';
 class OptionsSheet extends StatefulWidget {
   const OptionsSheet({
     super.key,
+    required this.onAddPlayer,
     required this.onResetMatch,
     required this.onNewMatch,
     required this.onShowHistory,
   });
 
+  final VoidCallback onAddPlayer;
   final VoidCallback onResetMatch;
   final VoidCallback onNewMatch;
   final VoidCallback onShowHistory;
@@ -22,11 +24,10 @@ class _OptionsSheetState extends State<OptionsSheet> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
@@ -35,6 +36,15 @@ class _OptionsSheetState extends State<OptionsSheet> {
                       fontWeight: FontWeight.bold,
                     ),
               ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person_add),
+              title: const Text('Add new player'),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                Navigator.of(context).pop();
+                widget.onAddPlayer();
+              },
             ),
             ListTile(
               leading: const Icon(Icons.restart_alt),
@@ -63,8 +73,7 @@ class _OptionsSheetState extends State<OptionsSheet> {
                 widget.onShowHistory();
               },
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
