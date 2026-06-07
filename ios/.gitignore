@@ -34,3 +34,4 @@ Runner/GeneratedPluginRegistrant.*
 !default.perspectivev3
 Runner.app.dSYM.zip
 Runner.ipa
+build/
