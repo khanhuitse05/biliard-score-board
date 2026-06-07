@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -42,13 +44,58 @@ class _MatchContent extends StatefulWidget {
   State<_MatchContent> createState() => _MatchContentState();
 }
 
-class _MatchContentState extends State<_MatchContent> {
+class _MatchContentState extends State<_MatchContent>
+    with TickerProviderStateMixin {
   /// Incremented on every score change to signal RoundButton to restart its
   /// countdown animation.
   int _countdownResetTrigger = 0;
 
   /// When true, all score editing and player management is disabled.
   bool _isLocked = false;
+
+  late final AnimationController _lockFlickerController;
+  late final Animation<double> _lockFlickerAnimation;
+
+  late final AnimationController _errorFlashController;
+  late final Animation<double> _errorFlashAnimation;
+  Timer? _errorFlashTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _lockFlickerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _lockFlickerAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 1),
+    ]).animate(
+      CurvedAnimation(
+        parent: _lockFlickerController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _errorFlashController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _errorFlashAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _errorFlashController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _errorFlashTimer?.cancel();
+    _lockFlickerController.dispose();
+    _errorFlashController.dispose();
+    super.dispose();
+  }
 
   MatchModel get match => widget.match;
 
@@ -58,13 +105,25 @@ class _MatchContentState extends State<_MatchContent> {
     });
   }
 
+  void _triggerLockFlicker() {
+    if (_isLocked) {
+      _lockFlickerController.forward(from: 0);
+    }
+  }
+
   void _update(BuildContext context, MatchModel updated) {
     context.read<MatchBoardCubit>().updateMatch(updated);
   }
 
   void _changeScore(BuildContext context, Player player, int delta) {
+    // Stop any ongoing error flash immediately when user edits the score
+    _errorFlashTimer?.cancel();
+    _errorFlashController.stop();
+    _errorFlashController.reset();
+
     if (_isLocked) {
       showToast(context, 'Screen locked');
+      _triggerLockFlicker();
       return;
     }
     final rounds = List<RoundModel>.from(match.rounds);
@@ -95,10 +154,30 @@ class _MatchContentState extends State<_MatchContent> {
     );
     rounds[rounds.length - 1] = updatedRound;
 
-    _update(context, match.copyWith(rounds: rounds));
+    final updatedMatch = match.copyWith(rounds: rounds);
+    _update(context, updatedMatch);
 
     // Signal RoundButton that a score changed
     _countdownResetTrigger++;
+
+    // Schedule error flash: wait 2s, then flash red if round is still invalid
+    _scheduleErrorFlash(updatedMatch);
+  }
+
+  void _scheduleErrorFlash(MatchModel updatedMatch) {
+    _errorFlashTimer?.cancel();
+    final rounds = updatedMatch.rounds;
+    final isInvalid = rounds.isNotEmpty &&
+        rounds.last.entries.any((e) => e.delta != 0) &&
+        rounds.last.roundTotal != 0;
+
+    if (isInvalid) {
+      _errorFlashTimer = Timer(const Duration(seconds: 2), () {
+        if (mounted) {
+          _errorFlashController.repeat(reverse: true);
+        }
+      });
+    }
   }
 
   void _onCountdownComplete() {
@@ -196,6 +275,7 @@ class _MatchContentState extends State<_MatchContent> {
   void _openPlayerSheet(BuildContext context, {Player? player}) {
     if (_isLocked && player != null) {
       showToast(context, 'Screen locked');
+      _triggerLockFlicker();
       return;
     }
     showModalBottomSheet<void>(
@@ -315,14 +395,35 @@ class _MatchContentState extends State<_MatchContent> {
                           icon: Icons.more_vert,
                           onTap: () => _showOptionsSheet(context),
                         ),
-                        // _circleIconButton(
-                        //   icon: Icons.add,
-                        //   onTap: () => _openPlayerSheet(context),
-                        // ),
                       ],
                     ),
                   ],
                 ),
+              ),
+            ),
+          ),
+          // Error flash overlay — red gradient that fades in/out across the
+          // entire screen when the round is invalid. Must be on top so it's
+          // visible above the opaque player columns.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedBuilder(
+                animation: _errorFlashAnimation,
+                builder: (context, child) {
+                  final opacity = _errorFlashAnimation.value;
+                  return Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.red.withValues(alpha: opacity * 0.6),
+                          Colors.red.withValues(alpha: opacity * 0.3),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -361,26 +462,37 @@ class _MatchContentState extends State<_MatchContent> {
         HapticFeedback.selectionClick();
         _toggleLock();
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: _isLocked
-              ? Colors.red.withValues(alpha: 0.3)
-              : Colors.white.withValues(alpha: 0.12),
-          shape: BoxShape.circle,
-          border: Border.all(
+      child: AnimatedBuilder(
+        animation: _lockFlickerAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _lockFlickerController.isAnimating
+                ? _lockFlickerAnimation.value
+                : 1.0,
+            child: child,
+          );
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
             color: _isLocked
-                ? Colors.red.withValues(alpha: 0.7)
-                : Colors.white.withValues(alpha: 0.4),
-            width: _isLocked ? 2.5 : 1,
+                ? Colors.red.withValues(alpha: 0.3)
+                : Colors.white.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: _isLocked
+                  ? Colors.red.withValues(alpha: 0.7)
+                  : Colors.white.withValues(alpha: 0.4),
+              width: _isLocked ? 2.5 : 1,
+            ),
           ),
-        ),
-        child: Icon(
-          _isLocked ? Icons.lock : Icons.lock_open,
-          color: _isLocked ? Colors.red : Colors.white,
-          size: 24,
+          child: Icon(
+            _isLocked ? Icons.lock : Icons.lock_open,
+            color: _isLocked ? Colors.red : Colors.white,
+            size: 24,
+          ),
         ),
       ),
     );

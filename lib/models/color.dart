@@ -5,9 +5,8 @@ const List<Color> kPlayerColors = <Color>[
   Colors.purple,
   Colors.blue,
   Colors.green,
-  Colors.red,
+  Colors.brown,
   Colors.teal,
   Colors.indigo,
   Colors.orange,
 ];
-

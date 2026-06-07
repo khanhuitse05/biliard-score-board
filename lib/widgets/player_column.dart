@@ -156,7 +156,7 @@ class _PlayerColumnState extends State<PlayerColumn>
             ),
             if (lastDeltaText != null)
               Positioned(
-                right: 8,
+                right: 32,
                 bottom: 8,
                 child: AnimatedBuilder(
                   animation: _flickerAnimation,
@@ -169,7 +169,7 @@ class _PlayerColumnState extends State<PlayerColumn>
                     );
                   },
                   child: Container(
-                    height: 35,
+                    height: 40,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
@@ -178,7 +178,7 @@ class _PlayerColumnState extends State<PlayerColumn>
                     ),
                     child: Text(
                       lastDeltaText,
-                      style: const TextStyle(color: Colors.white, fontSize: 25),
+                      style: const TextStyle(color: Colors.white, fontSize: 30),
                     ),
                   ),
                 ),
