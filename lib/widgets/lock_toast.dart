@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-void showLockToast(BuildContext context) {
+void showToast(BuildContext context, String message) {
   ScaffoldMessenger.of(context).clearSnackBars();
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -11,7 +11,7 @@ void showLockToast(BuildContext context) {
             color: Colors.grey.shade800,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Text('Screen locked'),
+          child: Text(message),
         ),
       ),
       duration: const Duration(seconds: 1),

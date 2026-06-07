@@ -64,7 +64,7 @@ class _MatchContentState extends State<_MatchContent> {
 
   void _changeScore(BuildContext context, Player player, int delta) {
     if (_isLocked) {
-      showLockToast(context);
+      showToast(context, 'Screen locked');
       return;
     }
     final rounds = List<RoundModel>.from(match.rounds);
@@ -143,19 +143,13 @@ class _MatchContentState extends State<_MatchContent> {
 
     final RoundModel current = match.rounds.last;
     final bool currentHasChanges = current.entries.any((e) => e.delta != 0);
-
     if (currentHasChanges) {
       return current.totalForPlayer(playerId);
     }
-
-    for (var i = match.rounds.length - 2; i >= 0; i--) {
-      final round = match.rounds[i];
-      final delta = round.totalForPlayer(playerId);
-      if (delta != 0) {
-        return delta;
-      }
+    if (match.rounds.length >= 2) {
+      final round = match.rounds[match.rounds.length - 2];
+      return round.totalForPlayer(playerId);
     }
-
     return 0;
   }
 
@@ -201,7 +195,7 @@ class _MatchContentState extends State<_MatchContent> {
 
   void _openPlayerSheet(BuildContext context, {Player? player}) {
     if (_isLocked && player != null) {
-      showLockToast(context);
+      showToast(context, 'Screen locked');
       return;
     }
     showModalBottomSheet<void>(

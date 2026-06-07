@@ -141,12 +141,14 @@ class _PlayerColumnState extends State<PlayerColumn>
               alignment: Alignment(0.0, 0.6),
               child: Transform.rotate(
                 angle: -10 * (3.141592653589793 / 180), // 45 degrees in radians
-                child: Text(
+                child: AutoSizeText(
                   widget.player.name,
                   maxLines: 1,
+                  maxFontSize: 120,
+                  minFontSize: 50,
                   style: TextStyle(
                     color: Colors.white.withAlpha(100),
-                    fontSize: 70,
+                    fontSize: 120,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
