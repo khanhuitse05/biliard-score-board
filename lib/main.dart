@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'cubit/match_board_cubit.dart';
@@ -9,6 +10,10 @@ import 'screens/match_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
   runApp(const ScoreBoardApp());
 }
 
@@ -19,10 +24,11 @@ class ScoreBoardApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Billiard Score Board',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
         useMaterial3: true,
-        fontFamily: 'BitcountSingle',
+        fontFamily: 'CourierPrime',
       ),
       home: BlocProvider(
         create: (context) => MatchBoardCubit()..load(),
@@ -44,9 +50,7 @@ class _RootView extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        return MatchScreen(
-          onOpenHistory: () => _openHistory(context),
-        );
+        return MatchScreen(onOpenHistory: () => _openHistory(context));
       },
     );
   }
