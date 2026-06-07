@@ -14,6 +14,7 @@ const defaultPlayerNames = [
   'James',
   'Gảy',
   'Nát',
+  'Mỹ',
 ];
 
 class AddPlayerSheet extends StatefulWidget {

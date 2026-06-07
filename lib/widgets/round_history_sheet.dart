@@ -13,13 +13,17 @@ class RoundHistorySheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final players = match.players;
+    // Exclude the current (last) round from the history list.
+    final historyRounds = match.rounds
+        .where((r) => r.index != match.rounds.last.index)
+        .toList();
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -41,36 +45,36 @@ class RoundHistorySheet extends StatelessWidget {
           ),
           SizedBox(
             height: MediaQuery.of(context).size.height - 120,
-            child: ListView.builder(
-              itemCount: match.rounds.length,
-              itemBuilder: (context, index) {
-                final reversedIndex = match.rounds.length - 1 - index;
-                final round = match.rounds[reversedIndex];
-                final isCurrentRound = round.index == match.rounds.last.index;
-                return Container(
-                  color: isCurrentRound
-                      ? Theme.of(
-                          context,
-                        ).colorScheme.primaryContainer.withValues(alpha: 0.5)
-                      : null,
-                  child: ListTile(
-                    title: Text(
-                      DateFormat('HH:mm:ss').format(round.createdAt),
-                      style: TextStyle(
-                        fontWeight: isCurrentRound
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                    ),
-                    subtitle: _roundSummaryWidget(
-                      context,
-                      round.index,
-                      players,
-                    ),
+            child: historyRounds.isEmpty
+                ? const Center(child: Text('No round history'))
+                : ListView.builder(
+                    itemCount: historyRounds.length,
+                    itemBuilder: (context, index) {
+                      final reversedIndex = historyRounds.length - 1 - index;
+                      final round = historyRounds[reversedIndex];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 100,
+                              child: Text(
+                                DateFormat('mm:ss').format(round.createdAt),
+                                style: TextStyle(fontSize: 18),
+                              ),
+                            ),
+                            Expanded(
+                              child: _roundSummaryWidget(
+                                context,
+                                round.index,
+                                players,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),
@@ -83,10 +87,14 @@ class RoundHistorySheet extends StatelessWidget {
     List<Player> players,
   ) {
     final round = match.rounds.firstWhere((r) => r.index == roundIndex);
-    final style = Theme.of(context).textTheme.bodyMedium;
+    final style = Theme.of(context).textTheme.bodyLarge;
     final spans = <InlineSpan>[];
-    for (var i = 0; i < players.length; i++) {
-      final p = players[i];
+    // Only show players who had a non-zero score change this round.
+    final activePlayers = players
+        .where((p) => round.totalForPlayer(p.id) != 0)
+        .toList();
+    for (var i = 0; i < activePlayers.length; i++) {
+      final p = activePlayers[i];
       final delta = round.totalForPlayer(p.id);
       if (i > 0) {
         spans.add(TextSpan(text: ' • ', style: style));
@@ -102,6 +110,7 @@ class RoundHistorySheet extends StatelessWidget {
           text: delta >= 0 ? '+$delta' : '$delta',
           style: style?.copyWith(
             color: scoreColor,
+            fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
         ),

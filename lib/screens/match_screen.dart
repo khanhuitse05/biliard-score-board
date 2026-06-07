@@ -67,25 +67,23 @@ class _MatchContentState extends State<_MatchContent>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _lockFlickerAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 1),
-    ]).animate(
-      CurvedAnimation(
-        parent: _lockFlickerController,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _lockFlickerAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 1),
+          TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 1),
+        ]).animate(
+          CurvedAnimation(
+            parent: _lockFlickerController,
+            curve: Curves.easeInOut,
+          ),
+        );
 
     _errorFlashController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
     _errorFlashAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _errorFlashController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _errorFlashController, curve: Curves.easeInOut),
     );
   }
 
@@ -167,7 +165,8 @@ class _MatchContentState extends State<_MatchContent>
   void _scheduleErrorFlash(MatchModel updatedMatch) {
     _errorFlashTimer?.cancel();
     final rounds = updatedMatch.rounds;
-    final isInvalid = rounds.isNotEmpty &&
+    final isInvalid =
+        rounds.isNotEmpty &&
         rounds.last.entries.any((e) => e.delta != 0) &&
         rounds.last.roundTotal != 0;
 
@@ -456,7 +455,7 @@ class _MatchContentState extends State<_MatchContent>
   }
 
   Widget _lockButton() {
-    const double size = 48;
+    const double size = 50;
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -490,7 +489,7 @@ class _MatchContentState extends State<_MatchContent>
           ),
           child: Icon(
             _isLocked ? Icons.lock : Icons.lock_open,
-            color: _isLocked ? Colors.red : Colors.white,
+            color: Colors.white,
             size: 24,
           ),
         ),
