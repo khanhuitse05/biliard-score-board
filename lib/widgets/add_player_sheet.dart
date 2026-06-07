@@ -5,7 +5,7 @@ import '../models/match.dart';
 import '../models/player.dart';
 
 /// Default names the user can quick-select when adding/editing a player.
-const defaultPlayerNames = ['Khá', 'Damy', 'Bino', 'Lú', 'PKon', 'James', 'Gãy'];
+const defaultPlayerNames = ['Khá', 'Damy', 'Bino', 'Lú', 'PKon', 'James', 'Gãy', 'Nát'];
 
 class AddPlayerSheet extends StatefulWidget {
   const AddPlayerSheet({

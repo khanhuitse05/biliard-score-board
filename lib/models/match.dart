@@ -102,7 +102,7 @@ class MatchModel {
 
   MatchModel ensureCurrentRound() {
     if (currentRound != null) return this;
-    final newRound = RoundModel(index: 1, entries: []);
+    final newRound = RoundModel(index: 1, entries: [], createdAt: DateTime.now());
     return copyWith(rounds: [...rounds, newRound]);
   }
 }

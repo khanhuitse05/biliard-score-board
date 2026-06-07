@@ -1,32 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../models/match.dart';
 import '../models/player.dart';
 
 class RoundHistorySheet extends StatelessWidget {
-  const RoundHistorySheet({
-    super.key,
-    required this.match,
-    required this.onNextRound,
-  });
+  const RoundHistorySheet({super.key, required this.match});
 
   final MatchModel match;
-  final VoidCallback onNextRound;
-
-  bool get _canGoNextRound {
-    if (match.rounds.isEmpty) return false;
-    final round = match.rounds.last;
-    final totalZero = round.roundTotal == 0;
-    final somePlayerScored = match.players
-        .any((p) => round.totalForPlayer(p.id) != 0);
-    return totalZero && somePlayerScored;
-  }
 
   @override
   Widget build(BuildContext context) {
     final players = match.players;
-    final canGoNext = _canGoNextRound;
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -34,15 +20,27 @@ class RoundHistorySheet extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              'Round history',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Round history',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                TextButton(
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Close'),
+                ),
+              ],
             ),
           ),
           SizedBox(
-            height: 240,
+            height: MediaQuery.of(context).size.height - 120,
             child: ListView.builder(
               itemCount: match.rounds.length,
               itemBuilder: (context, index) {
@@ -51,47 +49,28 @@ class RoundHistorySheet extends StatelessWidget {
                 final isCurrentRound = round.index == match.rounds.last.index;
                 return Container(
                   color: isCurrentRound
-                      ? Theme.of(context).colorScheme.primaryContainer
-                          .withValues(alpha: 0.5)
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer.withValues(alpha: 0.5)
                       : null,
                   child: ListTile(
                     title: Text(
-                      'Round ${round.index}',
+                      DateFormat('HH:mm:ss').format(round.createdAt),
                       style: TextStyle(
-                        fontWeight:
-                            isCurrentRound ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isCurrentRound
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                     subtitle: _roundSummaryWidget(
-                        context, round.index, players),
+                      context,
+                      round.index,
+                      players,
+                    ),
                   ),
                 );
               },
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child:               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      HapticFeedback.selectionClick();
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Close'),
-                  ),
-                  FilledButton(
-                    onPressed: canGoNext
-                        ? () {
-                            HapticFeedback.selectionClick();
-                            onNextRound();
-                          }
-                        : null,
-                    child: const Text('Next round'),
-                  ),
-                ],
-              ),
           ),
         ],
       ),
@@ -116,17 +95,18 @@ class RoundHistorySheet extends StatelessWidget {
       final scoreColor = delta > 0
           ? Colors.green
           : delta < 0
-              ? Colors.red
-              : Colors.grey;
-      spans.add(TextSpan(
-        text: delta >= 0 ? '+$delta' : '$delta',
-        style: style?.copyWith(
-          color: scoreColor,
-          fontWeight: FontWeight.w600,
+          ? Colors.red
+          : Colors.grey;
+      spans.add(
+        TextSpan(
+          text: delta >= 0 ? '+$delta' : '$delta',
+          style: style?.copyWith(
+            color: scoreColor,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-      ));
+      );
     }
     return Text.rich(TextSpan(children: spans, style: style));
   }
 }
-

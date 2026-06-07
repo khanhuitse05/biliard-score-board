@@ -10,23 +10,59 @@ class PlayerColumn extends StatefulWidget {
     required this.player,
     required this.score,
     required this.lastDelta,
-    required this.onTapPlus,
-    required this.onSwipeDelta,
-    required this.onLongPress,
+    this.onTapPlus,
+    this.onSwipeDelta,
+    this.onLongPress,
+    this.isRoundInvalid = false,
+    this.locked = false,
   });
 
   final Player player;
   final int score;
   final int lastDelta;
-  final VoidCallback onTapPlus;
-  final ValueChanged<int> onSwipeDelta;
-  final VoidCallback onLongPress;
+  final VoidCallback? onTapPlus;
+  final ValueChanged<int>? onSwipeDelta;
+  final VoidCallback? onLongPress;
+  final bool isRoundInvalid;
+  final bool locked;
 
   @override
   State<PlayerColumn> createState() => _PlayerColumnState();
 }
 
-class _PlayerColumnState extends State<PlayerColumn> {
+class _PlayerColumnState extends State<PlayerColumn>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _flickerController;
+  late Animation<double> _flickerAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _flickerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _flickerAnimation = Tween<double>(begin: 1.0, end: 0.2).animate(
+      CurvedAnimation(parent: _flickerController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant PlayerColumn oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isRoundInvalid && !_flickerController.isAnimating) {
+      _flickerController.repeat(reverse: true);
+    } else if (!widget.isRoundInvalid && _flickerController.isAnimating) {
+      _flickerController.stop();
+      _flickerController.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _flickerController.dispose();
+    super.dispose();
+  }
 
   Color _lighten(Color color, double amount) {
     final hsl = HSLColor.fromColor(color);
@@ -49,20 +85,18 @@ class _PlayerColumnState extends State<PlayerColumn> {
   }
 
   void _handleTap() {
-    // Trigger haptics immediately
+    final cb = widget.onTapPlus;
+    if (cb == null) return;
     HapticFeedback.lightImpact();
-    
-    // Trigger score change
-    widget.onTapPlus();
+    cb();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Create gradient similar to Tailwind: from-500 via-600 to-complementary
     final baseColor = widget.player.color;
-    final fromColor = _lighten(baseColor, 0.15); // Lighter start (like -500)
-    final viaColor = _darken(baseColor, 0.1); // Darker middle (like -600)
-    final toColor = _shiftHue(baseColor, 30); // Shift hue for complementary end
+    final fromColor = _lighten(baseColor, 0.15);
+    final viaColor = _darken(baseColor, 0.1);
+    final toColor = _shiftHue(baseColor, 30);
 
     final gradient = LinearGradient(
       begin: Alignment.topLeft,
@@ -75,21 +109,26 @@ class _PlayerColumnState extends State<PlayerColumn> {
         ? null
         : (widget.lastDelta > 0 ? '+${widget.lastDelta}' : '${widget.lastDelta}');
 
+    // When round is invalid, always show red; otherwise green/positive red/negative
+    final badgeBorderColor = widget.isRoundInvalid
+        ? Colors.red
+        : (widget.lastDelta > 0 ? Colors.green : Colors.red).withValues(alpha: 0.7);
+
     return GestureDetector(
       onTap: _handleTap,
       onLongPress: widget.onLongPress,
-      onVerticalDragEnd: (details) {
-        final velocity = details.primaryVelocity ?? 0;
-        if (velocity < 0) {
-          // Swipe up - increase score
-          HapticFeedback.lightImpact();
-          widget.onSwipeDelta(1);
-        } else if (velocity > 0) {
-          // Swipe down - decrease score
-          HapticFeedback.mediumImpact();
-          widget.onSwipeDelta(-1);
-        }
-      },
+      onVerticalDragEnd: widget.onSwipeDelta == null
+          ? null
+          : (details) {
+              final velocity = details.primaryVelocity ?? 0;
+              if (velocity < 0) {
+                HapticFeedback.lightImpact();
+                widget.onSwipeDelta!(1);
+              } else if (velocity > 0) {
+                HapticFeedback.mediumImpact();
+                widget.onSwipeDelta!(-1);
+              }
+            },
       child: Container(
         decoration: BoxDecoration(gradient: gradient),
         child: Column(
@@ -112,19 +151,26 @@ class _PlayerColumnState extends State<PlayerColumn> {
               ),
             ),
             if (lastDeltaText != null)
-              Container(
-                height: 24,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: (widget.lastDelta > 0 ? Colors.green : Colors.red).withValues(alpha: 0.7),
+              AnimatedBuilder(
+                animation: _flickerAnimation,
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: widget.isRoundInvalid ? _flickerAnimation.value : 1.0,
+                    child: child,
+                  );
+                },
+                child: Container(
+                  height: 24,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: badgeBorderColor),
                   ),
-                ),
-                child: Text(
-                  lastDeltaText,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  child: Text(
+                    lastDeltaText,
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                  ),
                 ),
               )
             else

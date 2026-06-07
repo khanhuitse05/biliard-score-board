@@ -12,6 +12,7 @@ import '../widgets/add_player_sheet.dart';
 import '../widgets/options_sheet.dart';
 import '../widgets/player_column.dart';
 import '../widgets/reset_match_dialog.dart';
+import '../widgets/round_button.dart';
 import '../widgets/round_history_sheet.dart';
 
 class MatchScreen extends StatelessWidget {
@@ -30,21 +31,42 @@ class MatchScreen extends StatelessWidget {
   }
 }
 
-class _MatchContent extends StatelessWidget {
+class _MatchContent extends StatefulWidget {
   const _MatchContent({required this.match, required this.onOpenHistory});
 
   final MatchModel match;
   final VoidCallback onOpenHistory;
+
+  @override
+  State<_MatchContent> createState() => _MatchContentState();
+}
+
+class _MatchContentState extends State<_MatchContent> {
+  /// Incremented on every score change to signal RoundButton to restart its
+  /// countdown animation.
+  int _countdownResetTrigger = 0;
+
+  /// When true, all score editing and player management is disabled.
+  bool _isLocked = false;
+
+  MatchModel get match => widget.match;
+
+  void _toggleLock() {
+    setState(() {
+      _isLocked = !_isLocked;
+    });
+  }
 
   void _update(BuildContext context, MatchModel updated) {
     context.read<MatchBoardCubit>().updateMatch(updated);
   }
 
   void _changeScore(BuildContext context, Player player, int delta) {
+    if (_isLocked) return;
     final rounds = List<RoundModel>.from(match.rounds);
     RoundModel current;
     if (rounds.isEmpty) {
-      current = RoundModel(index: 1, entries: []);
+      current = RoundModel(index: 1, entries: [], createdAt: DateTime.now());
       rounds.add(current);
     } else {
       current = rounds.last;
@@ -62,10 +84,43 @@ class _MatchContent extends StatelessWidget {
       entries.add(RoundEntry(playerId: player.id, delta: delta));
     }
 
-    final updatedRound = RoundModel(index: current.index, entries: entries);
+    final updatedRound = RoundModel(index: current.index, entries: entries, createdAt: current.createdAt);
     rounds[rounds.length - 1] = updatedRound;
 
     _update(context, match.copyWith(rounds: rounds));
+
+    // Signal RoundButton that a score changed
+    _countdownResetTrigger++;
+  }
+
+  void _onCountdownComplete() {
+    if (!mounted) return;
+
+    final currentMatch = context.read<MatchBoardCubit>().state.currentMatch;
+    if (currentMatch == null) return;
+
+    final rounds = currentMatch.rounds;
+    if (rounds.isEmpty) return;
+
+    final lastRound = rounds.last;
+    final roundTotal = lastRound.roundTotal;
+
+    // Only auto-advance if round total is 0 (valid round)
+    if (roundTotal != 0) return;
+
+    // Only advance if at least one player had a non-zero delta
+    final somePlayerScored = currentMatch.players
+        .any((p) => lastRound.totalForPlayer(p.id) != 0);
+    if (!somePlayerScored) return;
+
+    final nextIndex = lastRound.index + 1;
+    final newRound = RoundModel(index: nextIndex, entries: [], createdAt: DateTime.now());
+    _update(context, currentMatch.copyWith(rounds: [...rounds, newRound]));
+
+    // Auto-lock after round auto-advances
+    setState(() {
+      _isLocked = true;
+    });
   }
 
   int _badgeDeltaFor(String playerId) {
@@ -91,10 +146,23 @@ class _MatchContent extends StatelessWidget {
     return 0;
   }
 
+  /// Returns true when the current round's total is non-zero, meaning the
+  /// scores are invalid and the lastDelta badge should turn red and flicker.
+  bool get _isRoundInvalid {
+    if (match.rounds.isEmpty) return false;
+    final total = match.rounds.last.roundTotal;
+    final hasChanges = match.rounds.last.entries.any((e) => e.delta != 0);
+    return hasChanges && total != 0;
+  }
+
+  int get _currentRoundIndex =>
+      match.rounds.isEmpty ? 1 : match.rounds.last.index;
+
   Future<void> _resetMatch(BuildContext context) async {
     final confirmed = await ResetMatchDialog.show(context);
 
     if (confirmed == true && context.mounted) {
+      _countdownResetTrigger++;
       _update(context, match.copyWith(rounds: []));
     }
   }
@@ -107,17 +175,7 @@ class _MatchContent extends StatelessWidget {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) => RoundHistorySheet(
-        match: match,
-        onNextRound: () {
-          final nextIndex = match.rounds.isEmpty
-              ? 1
-              : match.rounds.last.index + 1;
-          final newRound = RoundModel(index: nextIndex, entries: []);
-          _update(context, match.copyWith(rounds: [...match.rounds, newRound]));
-          Navigator.of(ctx).pop();
-        },
-      ),
+      builder: (ctx) => RoundHistorySheet(match: match),
     );
   }
 
@@ -150,7 +208,7 @@ class _MatchContent extends StatelessWidget {
       builder: (ctx) => OptionsSheet(
         onResetMatch: () => _resetMatch(context),
         onNewMatch: () => _startNewMatch(context),
-        onShowHistory: onOpenHistory,
+        onShowHistory: widget.onOpenHistory,
       ),
     );
   }
@@ -160,9 +218,11 @@ class _MatchContent extends StatelessWidget {
       player: player,
       score: match.scoreFor(player.id),
       lastDelta: _badgeDeltaFor(player.id),
-      onTapPlus: () => _changeScore(context, player, 1),
-      onSwipeDelta: (delta) => _changeScore(context, player, delta),
-      onLongPress: () => _openPlayerSheet(context, player: player),
+      isRoundInvalid: _isRoundInvalid,
+      locked: _isLocked,
+      onTapPlus: _isLocked ? null : () => _changeScore(context, player, 1),
+      onSwipeDelta: _isLocked ? null : (delta) => _changeScore(context, player, delta),
+      onLongPress: _isLocked ? null : () => _openPlayerSheet(context, player: player),
     );
   }
 
@@ -212,24 +272,43 @@ class _MatchContent extends StatelessWidget {
                     ],
                   ),
           ),
-          Positioned.fill(
+           Positioned.fill(
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(8),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Center(child: _roundButton(context)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        RoundButton(
+                          roundIndex: _currentRoundIndex,
+                          resetTrigger: _countdownResetTrigger,
+                          isRoundValid: !_isRoundInvalid,
+                          onTap: _isLocked
+                              ? () {}
+                              : () {
+                                  HapticFeedback.selectionClick();
+                                  _showRoundHistory(context);
+                                },
+                          onCountdownComplete: _onCountdownComplete,
+                        ),
+                        _lockButton(),
+                      ],
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _circleIconButton(
                           icon: Icons.more_vert,
-                          onTap: () => _showOptionsSheet(context),
+                          onTap:
+                              _isLocked ? () {} : () => _showOptionsSheet(context),
                         ),
                         _circleIconButton(
                           icon: Icons.add,
-                          onTap: () => _openPlayerSheet(context),
+                          onTap:
+                              _isLocked ? () {} : () => _openPlayerSheet(context),
                         ),
                       ],
                     ),
@@ -239,30 +318,6 @@ class _MatchContent extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  GestureDetector _roundButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        _showRoundHistory(context);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Text(
-            'ROUND ${match.rounds.isEmpty ? 1 : match.rounds.last.index}',
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-          ),
-        ),
       ),
     );
   }
@@ -286,6 +341,38 @@ class _MatchContent extends StatelessWidget {
           border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
         ),
         child: Icon(icon, color: Colors.white, size: 24),
+      ),
+    );
+  }
+
+  Widget _lockButton() {
+    const double size = 48;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _toggleLock();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: _isLocked
+              ? Colors.red.withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.12),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: _isLocked
+                ? Colors.red.withValues(alpha: 0.7)
+                : Colors.white.withValues(alpha: 0.4),
+            width: _isLocked ? 2.5 : 1,
+          ),
+        ),
+        child: Icon(
+          _isLocked ? Icons.lock : Icons.lock_open,
+          color: _isLocked ? Colors.red : Colors.white,
+          size: 24,
+        ),
       ),
     );
   }
