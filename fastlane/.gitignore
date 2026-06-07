@@ -1,0 +1,12 @@
+output/*
+.env
+Preview.html
+input/images/6.5inch/**/*.png
+input/images/6.9inch/**/*.png
+input/images/*.png
+input/data.json
+service_account.json
+metadata_ios/en-US/*
+metadata_ios/*
+screenshots_ios/*
+metadata_android/*

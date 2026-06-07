@@ -1,0 +1,30 @@
+# Fastlane configuration for whitelabel app setup
+# Run from project root: fastlane [platform] [lane_name]
+#
+# iOS:
+#   fastlane ios create_app_ios   - Create Bundle ID, ASC app, TestFlight group, age ratings
+#   fastlane ios update_ios       - Upload metadata & screenshots to App Store Connect
+#
+# Android:
+#   fastlane android update_android - Upload metadata, images, screenshots to Google Play
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Create iOS app (Bundle ID, ASC app, TestFlight group, age ratings)"
+  lane :create_app_ios do
+    sh("ruby", File.join(__dir__, "create_app_ios.rb"))
+  end
+
+  desc "Update App Store Connect metadata and screenshots"
+  lane :update_ios do
+    sh("ruby", File.join(__dir__, "update_ios.rb"))
+  end
+end
+
+platform :android do
+  desc "Update Google Play metadata, images, and contact details"
+  lane :update_android do
+    sh("ruby", File.join(__dir__, "update_android.rb"))
+  end
+end

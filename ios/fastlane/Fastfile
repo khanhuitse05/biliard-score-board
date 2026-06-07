@@ -1,0 +1,51 @@
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+xcodeproj = './Runner.xcodeproj'
+workspace = './Runner.xcworkspace'
+
+default_platform(:ios)
+
+platform :ios do
+  
+  before_all do
+    ENV['FASTLANE_APP_IDENTIFIER'] = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+  end
+
+  desc "Setup and Build for AppStore"
+  private_lane :build do
+    # Compile Dart and refresh ios/Flutter/Generated.xcconfig before archiving.
+    # Skipping this leaves a stale CONFIGURATION_BUILD_DIR and archive fails with:
+    # ld: framework 'Pods_Runner' not found
+    sh("cd .. && flutter build ios --target lib/main.dart --release --no-codesign")
+    build_app(
+      workspace: workspace,
+      scheme: "Runner",
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          "com.pingak9.scoreboard" => "scoreboard_appstore",  # update your app bundle id & you provisioning name
+        }
+      }
+    )
+  end
+
+  desc "Push a new beta build to TestFlight"
+  lane :beta do
+    build
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      ipa: "Runner.ipa"
+    )
+  end
+
+  desc "Retry upload TestFlight"
+  lane :upload do
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      ipa: "Runner.ipa"
+    )
+  end
+
+end

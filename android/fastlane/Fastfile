@@ -1,0 +1,99 @@
+# frozen_string_literal: true
+
+default_platform(:android)
+
+ROOT_DIR = File.expand_path("../..", __dir__)
+AAB_PATH = File.join(ROOT_DIR, "build/app/outputs/bundle/release/app-release.aab")
+APK_PATH = File.join(ROOT_DIR, "build/app/outputs/flutter-apk/app-release.apk")
+
+def flutter_build_aab
+  debug_info_dir = File.join(
+    ROOT_DIR,
+    "debug-info/debug-info-prod/#{Time.now.strftime('%Y-%m-%d_%H-%M-%S')}"
+  )
+  sh("mkdir -p #{debug_info_dir}")
+  Dir.chdir(ROOT_DIR) do
+    sh(
+      "flutter build appbundle " \
+      "--obfuscate " \
+      "--split-debug-info=#{debug_info_dir} "
+    )
+  end
+end
+
+def flutter_build_apk
+  debug_info_dir = File.join(
+    ROOT_DIR,
+    "debug-info/debug-info-prod/#{Time.now.strftime('%Y-%m-%d_%H-%M-%S')}"
+  )
+  sh("mkdir -p #{debug_info_dir}")
+  Dir.chdir(ROOT_DIR) do
+    sh(
+      "flutter build apk " \
+      "--obfuscate " \
+      "--split-debug-info=#{debug_info_dir} "
+    )
+  end
+end
+
+def upload_aab(track:, release_status: nil)
+  options = {
+    track: track,
+    aab: AAB_PATH,
+    skip_upload_apk: true,
+    skip_upload_metadata: true,
+    skip_upload_images: true,
+    skip_upload_screenshots: true
+  }
+  options[:release_status] = release_status if release_status
+
+  upload_to_play_store(**options)
+end
+
+
+platform :android do
+  desc "Build release AAB (same flags as make buildAndroid)"
+  lane :build do
+    flutter_build_aab
+  end
+
+  desc "Upload an existing AAB without rebuilding"
+  lane :upload do
+    track = ENV.fetch("PLAY_STORE_TRACK", "internal")
+    upload_aab(track: track)
+  end
+
+  desc "Build and upload to internal testing track"
+  lane :beta do
+    flutter_build_aab
+    upload_aab(track: "internal")
+  end
+
+  desc "Build and upload to PLAY_STORE_TRACK (default: internal)"
+  lane :release do
+    flutter_build_aab
+    upload_aab(track: ENV.fetch("PLAY_STORE_TRACK", "internal"))
+  end
+
+  desc "Build and upload to production track"
+  lane :deploy do
+    flutter_build_aab
+    upload_aab(track: "production")
+  end
+
+  desc "Validate Play Store credentials against an existing AAB (no upload)"
+  lane :validate_credentials do
+    UI.user_error!("AAB not found. Run make buildAndroid first.") unless File.exist?(AAB_PATH)
+
+    upload_to_play_store(
+      track: "internal",
+      aab: AAB_PATH,
+      validate_only: true,
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+    UI.success("Play Store credentials are valid.")
+  end
+end

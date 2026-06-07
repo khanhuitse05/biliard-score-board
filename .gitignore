@@ -43,4 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-fastlane/
+**/Gemfile.lock
+**/fastlane/.env
+**/fastlane/README.md
+**/fastlane/report.xml
+
+play-store-credentials.json
