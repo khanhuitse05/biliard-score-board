@@ -114,8 +114,8 @@ Initial release — Live scoreboard for billiard matches with round tracking, pl
 | Identifiers | No | No | — |
 | Diagnostics | No | No | — |
 
-**Privacy Policy URL:** *(Provide a URL to your privacy policy)*  
-**Support URL:** *(Provide a URL to your support page)*  
+**Privacy Policy URL:** https://sites.google.com/view/pingak9s-privacy-policy/home  
+**Support URL:** https://www.facebook.com/j1mmyto9/
 **Marketing URL:** *(optional)*
 
 ---
@@ -145,10 +145,10 @@ This app is a simple score-keeper for billiard/pool matches.
 
 | Field | Value |
 |-------|-------|
-| First Name | *(your first name)* |
-| Last Name | *(your last name)* |
-| Email | *(your Apple ID email)* |
-| Phone | *(optional)* |
+| First Name | Khanh |
+| Last Name | To |
+| Email | khanhuitse05@gmail.com |
+| Phone | +84387683000 |
 
 ---
 
