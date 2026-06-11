@@ -8,7 +8,7 @@
 ## App Name (30 chars max)
 
 ```
-Billiard Score Board
+Đánh Đền
 ```
 
 ## Subtitle (30 chars max)
@@ -28,21 +28,16 @@ Perfect companion for billiard matches. Add players, track scores per round, and
 ## Description (4000 chars max)
 
 ```
-Billiard Score Board makes it effortless to keep score during billiard and pool matches. No more paper, no more arguments about who's winning — just tap +/− on each player's column and let the app handle the rest.
+Đánh Đền makes it effortless to keep score during billiard and pool matches. No more paper, no more arguments — just tap +/− on each player's column and let the app handle the rest.
 
-### WHAT YOU CAN DO
-• LIVE SCORE TRACKING — See every player's score in real time on a clean, landscape scoreboard. Tap + or − to adjust scores instantly.
-• ROUND-BY-ROUND SCORING — Scores are grouped into rounds. When a round completes, the app automatically locks it and starts a fresh one, so you always have a clear timeline of the game.
-• ADD & MANAGE PLAYERS — Add as many players as needed, assign each a unique color, rename them, or remove them at any time.
-• ROUND HISTORY — Review every round's detail for the current match. See exactly who scored what and when.
-• MATCH HISTORY — All matches are saved locally. Browse past games, reopen any match, and continue playing or review the scores.
-• LOCK TOGGLE — Prevent accidental score changes by locking the board. A visible lock indicator and toast alert keep you in control.
-• RESET & NEW MATCH — Reset the current match's scores or start a brand-new game from the options menu.
-• AUTO-ADVANCE COUNTDOWN — A visual countdown ring lets you know when the round will auto-complete and lock.
-• PERSISTENT STORAGE — All match data is saved on your device. Close the app and come back — your matches are still there.
-• LANDSCAPE ONLY — Optimized for landscape orientation, perfect for propping your phone or tablet on the side of the table.
+• Live scoreboard — every player's score at a glance, updated with a tap
+• Round-by-round scoring — completed rounds lock automatically and a new one begins, with a countdown ring before each auto-advance
+• Players your way — add, rename, or remove players and give each a color
+• Full history — review every round of the current match, and reopen past matches saved on your device
+• Lock the board — prevent accidental changes with one toggle
+• Reset or start a new match anytime from the options menu
 
-Whether you're playing 8-ball, 9-ball, straight pool, or snooker, Billiard Score Board keeps the focus on the game, not the math.
+Whether you're playing 8-ball, 9-ball, straight pool, or snooker, Đánh Đền keeps the focus on the game, not the math.
 ```
 
 ---
@@ -156,7 +151,7 @@ This app is a simple score-keeper for billiard/pool matches.
 
 | Language | App Name | Description |
 |----------|----------|-------------|
-| English (U.S.) | Billiard Score Board | Track scores round by round |
+| English (U.S.) | Đánh Đền | Track scores round by round |
 
 *Add additional languages if localized screenshots/metadata are provided.*
 
