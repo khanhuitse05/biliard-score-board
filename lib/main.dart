@@ -56,7 +56,7 @@ class _ScoreBoardAppState extends State<ScoreBoardApp>
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
         useMaterial3: true,
-        textTheme: GoogleFonts.orbitronTextTheme(),
+        textTheme: GoogleFonts.rajdhaniTextTheme(),
       ),
       home: BlocProvider(
         create: (context) => MatchBoardCubit()..load(),
