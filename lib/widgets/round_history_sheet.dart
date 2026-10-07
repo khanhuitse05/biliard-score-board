@@ -59,8 +59,8 @@ class RoundHistorySheet extends StatelessWidget {
                             SizedBox(
                               width: 100,
                               child: Text(
-                                DateFormat('mm:ss').format(round.createdAt),
-                                style: TextStyle(fontSize: 18),
+                                DateFormat('HH:mm').format(round.createdAt.toLocal()),
+                                style: const TextStyle(fontSize: 18),
                               ),
                             ),
                             Expanded(

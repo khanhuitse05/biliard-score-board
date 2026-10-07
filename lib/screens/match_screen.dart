@@ -11,6 +11,7 @@ import '../models/match.dart';
 import '../models/player.dart';
 import '../models/round.dart';
 import '../widgets/add_player_sheet.dart';
+import '../widgets/lock_button.dart';
 import '../widgets/lock_toast.dart';
 import '../widgets/options_sheet.dart';
 import '../widgets/player_column.dart';
@@ -46,15 +47,15 @@ class _MatchContent extends StatefulWidget {
 
 class _MatchContentState extends State<_MatchContent>
     with TickerProviderStateMixin {
-  /// Incremented on every score change to signal RoundButton to restart its
+  /// Incremented on every score change to signal LockButton to restart its
   /// countdown animation.
   int _countdownResetTrigger = 0;
 
+  /// Incremented when user taps while locked, triggering LockButton shake animation.
+  int _lockFlickerTrigger = 0;
+
   /// When true, all score editing and player management is disabled.
   bool _isLocked = false;
-
-  late final AnimationController _lockFlickerController;
-  late final Animation<double> _lockFlickerAnimation;
 
   late final AnimationController _errorFlashController;
   late final Animation<double> _errorFlashAnimation;
@@ -63,21 +64,6 @@ class _MatchContentState extends State<_MatchContent>
   @override
   void initState() {
     super.initState();
-    _lockFlickerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _lockFlickerAnimation =
-        TweenSequence<double>([
-          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 1),
-          TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 1),
-        ]).animate(
-          CurvedAnimation(
-            parent: _lockFlickerController,
-            curve: Curves.easeInOut,
-          ),
-        );
-
     _errorFlashController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -90,7 +76,6 @@ class _MatchContentState extends State<_MatchContent>
   @override
   void dispose() {
     _errorFlashTimer?.cancel();
-    _lockFlickerController.dispose();
     _errorFlashController.dispose();
     super.dispose();
   }
@@ -105,7 +90,9 @@ class _MatchContentState extends State<_MatchContent>
 
   void _triggerLockFlicker() {
     if (_isLocked) {
-      _lockFlickerController.forward(from: 0);
+      setState(() {
+        _lockFlickerTrigger++;
+      });
     }
   }
 
@@ -238,6 +225,15 @@ class _MatchContentState extends State<_MatchContent>
     final total = match.rounds.last.roundTotal;
     final hasChanges = match.rounds.last.entries.any((e) => e.delta != 0);
     return hasChanges && total != 0;
+  }
+
+  /// Returns true when scores are valid (sum == 0), at least one player scored,
+  /// and the screen is unlocked, meaning the auto-advance countdown is running.
+  bool get _isCountingDown {
+    if (_isLocked || match.rounds.isEmpty) return false;
+    final lastRound = match.rounds.last;
+    final hasChanges = lastRound.entries.any((e) => e.delta != 0);
+    return hasChanges && lastRound.roundTotal == 0;
   }
 
   int get _currentRoundIndex =>
@@ -376,15 +372,19 @@ class _MatchContentState extends State<_MatchContent>
                       children: [
                         RoundButton(
                           roundIndex: _currentRoundIndex,
-                          resetTrigger: _countdownResetTrigger,
-                          isRoundValid: !_isRoundInvalid,
                           onTap: () {
                             HapticFeedback.selectionClick();
                             _showRoundHistory(context);
                           },
+                        ),
+                        LockButton(
+                          isLocked: _isLocked,
+                          isCountingDown: _isCountingDown,
+                          resetTrigger: _countdownResetTrigger,
+                          flickerTrigger: _lockFlickerTrigger,
+                          onTap: _toggleLock,
                           onCountdownComplete: _onCountdownComplete,
                         ),
-                        _lockButton(),
                       ],
                     ),
                     Row(
@@ -450,49 +450,6 @@ class _MatchContentState extends State<_MatchContent>
           border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
         ),
         child: Icon(icon, color: Colors.white, size: 24),
-      ),
-    );
-  }
-
-  Widget _lockButton() {
-    const double size = 50;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        _toggleLock();
-      },
-      child: AnimatedBuilder(
-        animation: _lockFlickerAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _lockFlickerController.isAnimating
-                ? _lockFlickerAnimation.value
-                : 1.0,
-            child: child,
-          );
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: _isLocked
-                ? Colors.red.withValues(alpha: 0.3)
-                : Colors.white.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: _isLocked
-                  ? Colors.red.withValues(alpha: 0.7)
-                  : Colors.white.withValues(alpha: 0.4),
-              width: _isLocked ? 2.5 : 1,
-            ),
-          ),
-          child: Icon(
-            _isLocked ? Icons.lock : Icons.lock_open,
-            color: Colors.white,
-            size: 24,
-          ),
-        ),
       ),
     );
   }
