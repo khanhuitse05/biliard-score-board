@@ -103,25 +103,6 @@ fi
 sips -z 32 32 "$SCRIPT_DIR/$SOURCE_ICON" --out "$PROJECT_ROOT/web/favicon.png" > /dev/null 2>&1
 echo "  ✓ Generated favicon.png (32 x 32)"
 
-# Windows icon (ICO format)
-echo ""
-echo "🪟 Generating Windows icon..."
-if command -v magick &> /dev/null; then
-    # Create ICO with multiple sizes
-    magick "$SCRIPT_DIR/$SOURCE_ICON" \
-        \( -clone 0 -resize 16x16 \) \
-        \( -clone 0 -resize 32x32 \) \
-        \( -clone 0 -resize 48x48 \) \
-        \( -clone 0 -resize 64x64 \) \
-        \( -clone 0 -resize 128x128 \) \
-        \( -clone 0 -resize 256x256 \) \
-        -delete 0 \
-        "$PROJECT_ROOT/windows/runner/resources/app_icon.ico" 2>/dev/null
-    echo "  ✓ Generated app_icon.ico (multi-size)"
-else
-    echo "  ⚠️  ImageMagick not found, skipping Windows ICO generation"
-    echo "     Install ImageMagick: brew install imagemagick"
-fi
 
 echo ""
 echo "✅ Icon generation complete!"

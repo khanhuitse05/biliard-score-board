@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -47,6 +48,8 @@ class _MatchContent extends StatefulWidget {
 
 class _MatchContentState extends State<_MatchContent>
     with TickerProviderStateMixin {
+  final _scoreGroup = AutoSizeGroup();
+
   /// Incremented on every score change to signal LockButton to restart its
   /// countdown animation.
   int _countdownResetTrigger = 0;
@@ -301,11 +304,15 @@ class _MatchContentState extends State<_MatchContent>
     );
   }
 
-  Widget _buildPlayerColumn(BuildContext context, Player player) {
+  Widget _buildPlayerColumn(
+    BuildContext context,
+    Player player,
+  ) {
     return PlayerColumn(
       player: player,
       score: match.scoreFor(player.id),
       lastDelta: _badgeDeltaFor(player.id),
+      scoreGroup: _scoreGroup,
       isRoundInvalid: _isRoundInvalid,
       locked: _isLocked,
       onTapPlus: () => _changeScore(context, player, 1),
@@ -326,7 +333,9 @@ class _MatchContentState extends State<_MatchContent>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       for (final player in players)
-                        Expanded(child: _buildPlayerColumn(context, player)),
+                        Expanded(
+                          child: _buildPlayerColumn(context, player),
+                        ),
                     ],
                   )
                 : Column(
@@ -360,15 +369,19 @@ class _MatchContentState extends State<_MatchContent>
                     ],
                   ),
           ),
-          Positioned.fill(
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
             child: SafeArea(
+              bottom: false,
               child: Padding(
                 padding: const EdgeInsets.all(8),
-                child: Column(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         RoundButton(
                           roundIndex: _currentRoundIndex,
@@ -377,24 +390,20 @@ class _MatchContentState extends State<_MatchContent>
                             _showRoundHistory(context);
                           },
                         ),
-                        LockButton(
-                          isLocked: _isLocked,
-                          isCountingDown: _isCountingDown,
-                          resetTrigger: _countdownResetTrigger,
-                          flickerTrigger: _lockFlickerTrigger,
-                          onTap: _toggleLock,
-                          onCountdownComplete: _onCountdownComplete,
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
+                        const SizedBox(width: 8),
                         _circleIconButton(
                           icon: Icons.more_vert,
                           onTap: () => _showOptionsSheet(context),
                         ),
                       ],
+                    ),
+                    LockButton(
+                      isLocked: _isLocked,
+                      isCountingDown: _isCountingDown,
+                      resetTrigger: _countdownResetTrigger,
+                      flickerTrigger: _lockFlickerTrigger,
+                      onTap: _toggleLock,
+                      onCountdownComplete: _onCountdownComplete,
                     ),
                   ],
                 ),
@@ -435,7 +444,7 @@ class _MatchContentState extends State<_MatchContent>
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    const double size = 48;
+    const double size = 40;
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -449,7 +458,7 @@ class _MatchContentState extends State<_MatchContent>
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
         ),
-        child: Icon(icon, color: Colors.white, size: 24),
+        child: Icon(icon, color: Colors.white, size: 22),
       ),
     );
   }

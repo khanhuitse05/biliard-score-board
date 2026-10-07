@@ -10,6 +10,7 @@ class PlayerColumn extends StatefulWidget {
     required this.player,
     required this.score,
     required this.lastDelta,
+    this.scoreGroup,
     this.onTapPlus,
     this.onSwipeDelta,
     this.onLongPress,
@@ -20,6 +21,7 @@ class PlayerColumn extends StatefulWidget {
   final Player player;
   final int score;
   final int lastDelta;
+  final AutoSizeGroup? scoreGroup;
   final VoidCallback? onTapPlus;
   final ValueChanged<int>? onSwipeDelta;
   final VoidCallback? onLongPress;
@@ -137,73 +139,84 @@ class _PlayerColumnState extends State<PlayerColumn>
         decoration: BoxDecoration(gradient: gradient),
         child: Stack(
           children: [
-            Align(
-              alignment: Alignment(0.0, 0.6),
-              child: Transform.rotate(
-                angle: -10 * (3.141592653589793 / 180), // 45 degrees in radians
+            // Score: center top portion, bounded so it never clips or overlaps bottom row
+            Positioned(
+              left: 12,
+              right: 12,
+              top: 10,
+              bottom: 48,
+              child: Center(
                 child: AutoSizeText(
-                  widget.player.name,
-                  maxLines: 1,
-                  maxFontSize: 120,
-                  minFontSize: 50,
-                  style: TextStyle(
-                    color: Colors.white.withAlpha(100),
-                    fontSize: 120,
+                  '${widget.score}',
+                  group: widget.scoreGroup,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 140,
                     fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 1,
+                  minFontSize: 24,
+                  maxFontSize: 140,
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
-            if (lastDeltaText != null)
-              Positioned(
-                right: 32,
-                bottom: 8,
-                child: AnimatedBuilder(
-                  animation: _flickerAnimation,
-                  builder: (context, child) {
-                    return Opacity(
-                      opacity: widget.isRoundInvalid
-                          ? _flickerAnimation.value
-                          : 1.0,
-                      child: child,
-                    );
-                  },
-                  child: Container(
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: badgeBorderColor),
-                    ),
-                    child: Text(
-                      lastDeltaText,
-                      style: const TextStyle(color: Colors.white, fontSize: 30),
+            // Bottom row: Name on bottom-left, Score changes on bottom-right
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 8,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: AutoSizeText(
+                      widget.player.name,
+                      maxLines: 1,
+                      minFontSize: 14,
+                      maxFontSize: 28,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
+                  if (lastDeltaText != null) ...[
+                    const SizedBox(width: 8),
+                    AnimatedBuilder(
+                      animation: _flickerAnimation,
+                      builder: (context, child) {
+                        return Opacity(
+                          opacity: widget.isRoundInvalid
+                              ? _flickerAnimation.value
+                              : 1.0,
+                          child: child,
+                        );
+                      },
+                      child: Container(
+                        height: 34,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: badgeBorderColor, width: 1.5),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          lastDeltaText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  alignment: Alignment.center,
-                  child: AutoSizeText(
-                    '${widget.score}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 100,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    minFontSize: 24,
-                    maxFontSize: 100,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-              ],
             ),
           ],
         ),

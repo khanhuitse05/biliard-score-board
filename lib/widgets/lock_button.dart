@@ -82,7 +82,7 @@ class _LockButtonState extends State<LockButton>
       TweenSequenceItem(tween: Tween(begin: 1.25, end: 0.95), weight: 1),
       TweenSequenceItem(tween: Tween(begin: 0.95, end: 1.0), weight: 1),
     ]).animate(
-      CurvedAnimation(parent: _snapController, curve: Curves.easeOutBack),
+      CurvedAnimation(parent: _snapController, curve: Curves.easeOut),
     );
 
     if (widget.isCountingDown) {

@@ -8,18 +8,45 @@ import 'cubit/match_board_state.dart';
 import 'models/match.dart';
 import 'screens/history_screen.dart';
 import 'screens/match_screen.dart';
+import 'services/wakelock_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
+  await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
+  await WakelockService.enable();
   runApp(const ScoreBoardApp());
 }
 
-class ScoreBoardApp extends StatelessWidget {
+class ScoreBoardApp extends StatefulWidget {
   const ScoreBoardApp({super.key});
+
+  @override
+  State<ScoreBoardApp> createState() => _ScoreBoardAppState();
+}
+
+class _ScoreBoardAppState extends State<ScoreBoardApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      WakelockService.enable();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

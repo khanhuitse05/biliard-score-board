@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class OptionsSheet extends StatefulWidget {
+class OptionsSheet extends StatelessWidget {
   const OptionsSheet({
     super.key,
     required this.onAddPlayer,
@@ -16,18 +16,13 @@ class OptionsSheet extends StatefulWidget {
   final VoidCallback onShowHistory;
 
   @override
-  State<OptionsSheet> createState() => _OptionsSheetState();
-}
-
-class _OptionsSheetState extends State<OptionsSheet> {
-
-  @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
@@ -43,7 +38,7 @@ class _OptionsSheetState extends State<OptionsSheet> {
               onTap: () {
                 HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
-                widget.onAddPlayer();
+                onAddPlayer();
               },
             ),
             ListTile(
@@ -52,7 +47,7 @@ class _OptionsSheetState extends State<OptionsSheet> {
               onTap: () {
                 HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
-                widget.onResetMatch();
+                onResetMatch();
               },
             ),
             ListTile(
@@ -61,7 +56,7 @@ class _OptionsSheetState extends State<OptionsSheet> {
               onTap: () {
                 HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
-                widget.onNewMatch();
+                onNewMatch();
               },
             ),
             ListTile(
@@ -70,10 +65,11 @@ class _OptionsSheetState extends State<OptionsSheet> {
               onTap: () {
                 HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
-                widget.onShowHistory();
+                onShowHistory();
               },
             ),
-        ],
+          ],
+        ),
       ),
     );
   }

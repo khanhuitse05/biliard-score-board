@@ -57,7 +57,7 @@ flutter pub get
 flutter run
 ```
 
-Supports iOS, Android, macOS, Windows, Linux, and web.
+Supports iOS, Android, macOS, and web.
 
 ### Project structure
 

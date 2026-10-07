@@ -18,12 +18,14 @@ class RoundHistorySheet extends StatelessWidget {
         .where((r) => r.index != match.rounds.last.index)
         .toList();
     return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -77,6 +79,7 @@ class RoundHistorySheet extends StatelessWidget {
                   ),
           ),
         ],
+      ),
       ),
     );
   }

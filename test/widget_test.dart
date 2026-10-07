@@ -6,15 +6,16 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:score_board/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('App loads match screen', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const ScoreBoardApp());
+    await tester.pumpAndSettle();
 
-    // Verify that initial UI shows at least one score of 0.
     expect(find.text('0'), findsWidgets);
   });
 }

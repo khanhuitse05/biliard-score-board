@@ -55,9 +55,12 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
   bool get _isEdit => widget.player != null;
 
   void _submit() {
-    final name = _nameController.text.trim().isEmpty
-        ? 'Player ${widget.match.players.length + 1}'
-        : _nameController.text.trim();
+    var name = _nameController.text.trim();
+    if (name.isEmpty) {
+      name = 'Player ${widget.match.players.length + 1}';
+    } else if (name.length > 16) {
+      name = name.substring(0, 16);
+    }
 
     if (_isEdit) {
       final updatedPlayers = widget.match.players
@@ -99,6 +102,10 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
             const SizedBox(height: 16),
             TextField(
               controller: _nameController,
+              maxLength: 16,
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(16),
+              ],
               decoration: const InputDecoration(
                 labelText: 'Name',
                 border: OutlineInputBorder(),
