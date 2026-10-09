@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -584,7 +585,10 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
   }
 
   Widget _buildCenterDotLog(Player p1, Player p2) {
-    final totalDots = match.raceTarget;
+    // In a "Race to N", the maximum possible number of racks/races is 2 * N - 1
+    // (e.g., Race to 7 can reach hill-hill 6-6, requiring up to 13 races).
+    final maxPossibleRaces = match.raceTarget > 0 ? (2 * match.raceTarget - 1) : 1;
+    final totalDots = math.max(maxPossibleRaces, match.rounds.length);
     final rounds = match.rounds;
 
     // Determine number of columns so dots form a neat 8-bit matrix
@@ -593,13 +597,30 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
       columns = 2;
     } else if (totalDots <= 18) {
       columns = 3;
-    } else {
+    } else if (totalDots <= 28) {
       columns = 4;
+    } else if (totalDots <= 45) {
+      columns = 5;
+    } else {
+      columns = 6;
     }
 
     final int rowsPerColumn = (totalDots / columns).ceil();
-    final double dotSize = totalDots > 20 ? 11.0 : 13.0;
-    final double spacing = totalDots > 20 ? 4.0 : 5.0;
+    final double dotSize;
+    final double spacing;
+    if (totalDots > 45) {
+      dotSize = 8.0;
+      spacing = 2.5;
+    } else if (totalDots > 28) {
+      dotSize = 10.0;
+      spacing = 3.5;
+    } else if (totalDots > 18) {
+      dotSize = 11.0;
+      spacing = 4.0;
+    } else {
+      dotSize = 13.0;
+      spacing = 5.0;
+    }
 
     return Center(
       child: Container(
