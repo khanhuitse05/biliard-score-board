@@ -63,7 +63,9 @@ class _BalancePillState extends State<BalancePill>
     final hasChanges = widget.hasChanges;
     final roundTotal = widget.roundTotal;
     final isInvalid = hasChanges && roundTotal != 0;
-    final isBalanced = hasChanges && roundTotal == 0;
+    if (!isInvalid) {
+      return SizedBox();
+    }
 
     final Color bgColor;
     final Color borderColor;
@@ -71,26 +73,12 @@ class _BalancePillState extends State<BalancePill>
     final IconData icon;
     final String label;
 
-    if (isInvalid) {
-      final diffSign = roundTotal > 0 ? '+$roundTotal' : '$roundTotal';
-      bgColor = Colors.red.withValues(alpha: 0.28);
-      borderColor = Colors.redAccent.withValues(alpha: 0.85);
-      textColor = const Color(0xFFFF5252);
-      icon = Icons.error_outline_rounded;
-      label = 'DIFF: $diffSign';
-    } else if (isBalanced) {
-      bgColor = const Color(0xFF00E5FF).withValues(alpha: 0.18);
-      borderColor = const Color(0xFF00E5FF).withValues(alpha: 0.75);
-      textColor = const Color(0xFF00E5FF);
-      icon = Icons.check_circle_outline_rounded;
-      label = 'BALANCED ✓';
-    } else {
-      bgColor = Colors.white.withValues(alpha: 0.10);
-      borderColor = Colors.white.withValues(alpha: 0.20);
-      textColor = Colors.white.withValues(alpha: 0.70);
-      icon = Icons.balance_rounded;
-      label = '';
-    }
+    final diffSign = roundTotal > 0 ? '+$roundTotal' : '$roundTotal';
+    bgColor = Colors.red.withValues(alpha: 0.28);
+    borderColor = Colors.redAccent.withValues(alpha: 0.85);
+    textColor = const Color(0xFFFF5252);
+    icon = Icons.error_outline_rounded;
+    label = 'DIFF: $diffSign';
 
     return GestureDetector(
       onTap: widget.onTap == null
@@ -103,10 +91,7 @@ class _BalancePillState extends State<BalancePill>
         animation: _pulseAnimation,
         builder: (context, child) {
           final scale = isInvalid ? _pulseAnimation.value : 1.0;
-          return Transform.scale(
-            scale: scale,
-            child: child,
-          );
+          return Transform.scale(scale: scale, child: child);
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
@@ -119,23 +104,13 @@ class _BalancePillState extends State<BalancePill>
               color: borderColor,
               width: isInvalid ? 1.5 : 1.0,
             ),
-            boxShadow: isInvalid
-                ? [
-                    BoxShadow(
-                      color: Colors.red.withValues(alpha: 0.25),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : (isBalanced
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF00E5FF).withValues(alpha: 0.25),
-                          blurRadius: 8,
-                          spreadRadius: 1,
-                        ),
-                      ]
-                    : null),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.red.withValues(alpha: 0.25),
+                blurRadius: 8,
+                spreadRadius: 1,
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
