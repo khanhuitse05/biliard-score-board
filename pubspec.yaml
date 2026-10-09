@@ -1,7 +1,7 @@
 name: score_board
 description: 'A new Flutter project.'
 publish_to: 'none'
-version: 1.0.2+7
+version: 2.0.0+8
 
 environment:
   sdk: ^3.10.1
@@ -14,7 +14,6 @@ dependencies:
   shared_preferences: ^2.5.4
   auto_size_text: ^3.0.0
   flutter_bloc: ^9.0.0
-  google_fonts: ^6.2.1
   wakelock_plus: ^1.8.1
 
 dev_dependencies:
@@ -28,12 +27,6 @@ flutter:
   uses-material-design: true
 
   fonts:
-    - family: Rajdhani
+    - family: Audiowide
       fonts:
-        - asset: assets/fonts/Rajdhani-Regular.ttf
-        - asset: assets/fonts/Rajdhani-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Rajdhani-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Rajdhani-Bold.ttf
-          weight: 700
+        - asset: assets/fonts/Audiowide-Regular.ttf

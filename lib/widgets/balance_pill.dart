@@ -89,7 +89,7 @@ class _BalancePillState extends State<BalancePill>
       borderColor = Colors.white.withValues(alpha: 0.20);
       textColor = Colors.white.withValues(alpha: 0.70);
       icon = Icons.balance_rounded;
-      label = 'ZERO-SUM';
+      label = '';
     }
 
     return GestureDetector(

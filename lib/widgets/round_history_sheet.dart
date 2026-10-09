@@ -13,7 +13,6 @@ class RoundHistorySheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final players = match.players;
-    // Exclude the current (last) round from the history list.
     final historyRounds = match.rounds
         .where((r) => r.index != match.rounds.last.index)
         .toList();
@@ -26,60 +25,67 @@ class RoundHistorySheet extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Round history',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                TextButton(
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Close'),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height - 120,
-            child: historyRounds.isEmpty
-                ? const Center(child: Text('No round history'))
-                : ListView.builder(
-                    itemCount: historyRounds.length,
-                    itemBuilder: (context, index) {
-                      final reversedIndex = historyRounds.length - 1 - index;
-                      final round = historyRounds[reversedIndex];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 100,
-                              child: Text(
-                                DateFormat('HH:mm').format(round.createdAt.toLocal()),
-                                style: const TextStyle(fontSize: 18),
-                              ),
-                            ),
-                            Expanded(
-                              child: _roundSummaryWidget(
-                                context,
-                                round.index,
-                                players,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Round history',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-          ),
-        ],
-      ),
+                  TextButton(
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height - 120,
+              child: historyRounds.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No round history',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: historyRounds.length,
+                      itemBuilder: (context, index) {
+                        final reversedIndex = historyRounds.length - 1 - index;
+                        final round = historyRounds[reversedIndex];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 80,
+                                child: Text(
+                                  DateFormat('HH:mm').format(round.createdAt.toLocal()),
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                              Expanded(
+                                child: _roundSummaryWidget(
+                                  context,
+                                  round.index,
+                                  players,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -112,13 +112,6 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               ),
               // autofocus: !_isEdit,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Quick select:',
-              style: Theme.of(
-                context,
-              ).textTheme.labelMedium?.copyWith(color: Colors.grey[600]),
-            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,

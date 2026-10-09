@@ -63,7 +63,7 @@ Supports iOS, Android, macOS, and web.
 
 - `lib/` — App code (screens, widgets, cubit, models)
 - `resources/` — Screenshots and assets for documentation
-- `assets/fonts/` — Bundled offline fonts (Rajdhani)
+- `assets/fonts/` — Bundled offline fonts (Audiowide)
 
 ## Tech
 

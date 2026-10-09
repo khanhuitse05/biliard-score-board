@@ -17,6 +17,7 @@ import '../widgets/lock_button.dart';
 import '../widgets/lock_toast.dart';
 import '../widgets/options_sheet.dart';
 import '../widgets/player_column.dart';
+import '../widgets/race_match_content.dart';
 import '../widgets/reset_match_dialog.dart';
 import '../widgets/round_button.dart';
 import '../widgets/round_history_sheet.dart';
@@ -30,7 +31,14 @@ class MatchScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<MatchBoardCubit, MatchBoardState>(
       builder: (context, state) {
-        final match = state.currentMatch!.ensureCurrentRound();
+        final current = state.currentMatch!;
+        if (current.isRaceMode) {
+          return RaceMatchContent(
+            match: current,
+            onOpenHistory: onOpenHistory,
+          );
+        }
+        final match = current.ensureCurrentRound();
         return _MatchContent(match: match, onOpenHistory: onOpenHistory);
       },
     );
@@ -252,7 +260,7 @@ class _MatchContentState extends State<_MatchContent>
 
   void _onBalancePillTap() {
     if (!_currentRoundHasChanges) {
-      showToast(context, 'Zero-sum mode: round scores must sum to 0.');
+      showToast(context, 'Round scores must sum to 0.');
     } else if (_currentRoundTotal != 0) {
       final total = _currentRoundTotal;
       final sign = total > 0 ? '+$total' : '$total';
@@ -316,14 +324,20 @@ class _MatchContentState extends State<_MatchContent>
     );
   }
 
+  Future<void> _startNewRace(BuildContext context) async {
+    await context.read<MatchBoardCubit>().newRaceMatch();
+  }
+
   void _showOptionsSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) => OptionsSheet(
+        isRaceMode: false,
         onAddPlayer: () => _openPlayerSheet(context),
         onResetMatch: () => _resetMatch(context),
         onNewMatch: () => _startNewMatch(context),
+        onNewRace: () => _startNewRace(context),
         onShowHistory: widget.onOpenHistory,
       ),
     );
@@ -410,18 +424,18 @@ class _MatchContentState extends State<_MatchContent>
                       children: [
                         Row(
                           mainAxisSize: MainAxisSize.min,
+                          spacing: 8,
                           children: [
+                            _circleIconButton(
+                              icon: Icons.more_vert,
+                              onTap: () => _showOptionsSheet(context),
+                            ),
                             RoundButton(
                               roundIndex: _currentRoundIndex,
                               onTap: () {
                                 HapticFeedback.selectionClick();
                                 _showRoundHistory(context);
                               },
-                            ),
-                            const SizedBox(width: 8),
-                            _circleIconButton(
-                              icon: Icons.more_vert,
-                              onTap: () => _showOptionsSheet(context),
                             ),
                           ],
                         ),
@@ -435,6 +449,7 @@ class _MatchContentState extends State<_MatchContent>
                         ),
                       ],
                     ),
+                    if(_currentRoundHasChanges)
                     BalancePill(
                       roundTotal: _currentRoundTotal,
                       hasChanges: _currentRoundHasChanges,

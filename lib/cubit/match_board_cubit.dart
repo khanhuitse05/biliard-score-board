@@ -70,6 +70,13 @@ class MatchBoardCubit extends Cubit<MatchBoardState> {
     emit(state.copyWith(matches: list, currentMatch: newMatch));
   }
 
+  Future<void> newRaceMatch({int raceTarget = 7}) async {
+    final newMatch = MatchModel.createRaceDefault(raceTarget: raceTarget);
+    final list = [...state.matches, newMatch];
+    await _save(list);
+    emit(state.copyWith(matches: list, currentMatch: newMatch));
+  }
+
   void selectMatch(MatchModel match) {
     emit(state.copyWith(currentMatch: match));
   }
