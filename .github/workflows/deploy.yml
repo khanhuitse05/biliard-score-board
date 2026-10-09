@@ -41,7 +41,7 @@ jobs:
 
       - name: Build Flutter Web
         run: |
-          flutter build web --release --base-href "${{ steps.pages.outputs.base_path }}/"
+          flutter build web --release --base-href "/"
           cp build/web/index.html build/web/404.html
 
       - name: Upload Pages artifact
