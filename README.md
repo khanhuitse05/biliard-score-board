@@ -4,7 +4,7 @@ A Flutter app for tracking scores during billiard matches. Add players, update s
 
 ## Features
 
-- **Live score board** — Main match view with player names and current scores. Tap **+** / **−** to adjust scores for the current round.
+- **Live score board** — Main match view with player names and current scores. Tap a player's column or swipe up to add (+1), swipe down to subtract (-1), and long-press to edit or remove a player.
 - **Add players** — Add or remove players and assign colors. Supports multiple players per match.
 - **Rounds** — Scores are grouped by rounds. Start a new round to lock the previous one and keep a clear history.
 - **Round history** — View and edit past round scores from the current match.
@@ -63,7 +63,7 @@ Supports iOS, Android, macOS, and web.
 
 - `lib/` — App code (screens, widgets, cubit, models)
 - `resources/` — Screenshots and assets for documentation
-- `assets/fonts/` — Custom fonts (BitcountSingle, Courier Prime)
+- `assets/fonts/` — Bundled offline fonts (Rajdhani)
 
 ## Tech
 

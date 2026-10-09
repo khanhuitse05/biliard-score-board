@@ -37,6 +37,8 @@ class _PlayerColumnState extends State<PlayerColumn>
   late AnimationController _flickerController;
   late Animation<double> _flickerAnimation;
 
+  bool _isScoreIncreasing = true;
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +54,9 @@ class _PlayerColumnState extends State<PlayerColumn>
   @override
   void didUpdateWidget(covariant PlayerColumn oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.score != oldWidget.score) {
+      _isScoreIncreasing = widget.score > oldWidget.score;
+    }
     if (widget.isRoundInvalid && !_flickerController.isAnimating) {
       _flickerController.repeat(reverse: true);
     } else if (!widget.isRoundInvalid && _flickerController.isAnimating) {
@@ -145,20 +150,67 @@ class _PlayerColumnState extends State<PlayerColumn>
               right: 12,
               top: 10,
               bottom: 48,
-              child: Center(
-                child: AutoSizeText(
-                  '${widget.score}',
-                  group: widget.scoreGroup,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 140,
-                    fontWeight: FontWeight.bold,
-                    fontFeatures: [FontFeature.tabularFigures()],
+              child: ClipRect(
+                child: Center(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 280),
+                    transitionBuilder: (child, animation) {
+                      final isCurrent = child.key is ValueKey<int> &&
+                          (child.key as ValueKey<int>).value == widget.score;
+
+                      final inOffset = Tween<Offset>(
+                        begin: Offset(0.0, _isScoreIncreasing ? 0.6 : -0.6),
+                        end: Offset.zero,
+                      ).animate(CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      ));
+
+                      final outOffset = Tween<Offset>(
+                        begin: Offset(0.0, _isScoreIncreasing ? -0.6 : 0.6),
+                        end: Offset.zero,
+                      ).animate(CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeInCubic,
+                      ));
+
+                      final scale = Tween<double>(
+                        begin: 0.85,
+                        end: 1.0,
+                      ).animate(CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutBack,
+                      ));
+
+                      return SlideTransition(
+                        position: isCurrent ? inOffset : outOffset,
+                        child: ScaleTransition(
+                          scale: isCurrent
+                              ? scale
+                              : const AlwaysStoppedAnimation(1.0),
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        ),
+                      );
+                    },
+                    child: AutoSizeText(
+                      '${widget.score}',
+                      key: ValueKey<int>(widget.score),
+                      group: widget.scoreGroup,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 140,
+                        fontWeight: FontWeight.bold,
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
+                      maxLines: 1,
+                      minFontSize: 24,
+                      maxFontSize: 140,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  maxLines: 1,
-                  minFontSize: 24,
-                  maxFontSize: 140,
-                  textAlign: TextAlign.center,
                 ),
               ),
             ),
@@ -184,39 +236,61 @@ class _PlayerColumnState extends State<PlayerColumn>
                       ),
                     ),
                   ),
-                  if (lastDeltaText != null) ...[
-                    const SizedBox(width: 8),
-                    AnimatedBuilder(
-                      animation: _flickerAnimation,
-                      builder: (context, child) {
-                        return Opacity(
-                          opacity: widget.isRoundInvalid
-                              ? _flickerAnimation.value
-                              : 1.0,
-                          child: child,
-                        );
-                      },
-                      child: Container(
-                        height: 34,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: badgeBorderColor, width: 1.5),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    transitionBuilder: (child, animation) {
+                      return ScaleTransition(
+                        scale: CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutBack,
                         ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          lastDeltaText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            fontFeatures: [FontFeature.tabularFigures()],
+                        child: FadeTransition(opacity: animation, child: child),
+                      );
+                    },
+                    child: lastDeltaText == null
+                        ? const SizedBox.shrink(key: ValueKey('empty_delta'))
+                        : Padding(
+                            key: ValueKey<String>(lastDeltaText),
+                            padding: const EdgeInsets.only(left: 8),
+                            child: AnimatedBuilder(
+                              animation: _flickerAnimation,
+                              builder: (context, child) {
+                                return Opacity(
+                                  opacity: widget.isRoundInvalid
+                                      ? _flickerAnimation.value
+                                      : 1.0,
+                                  child: child,
+                                );
+                              },
+                              child: Container(
+                                height: 34,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: badgeBorderColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  lastDeltaText,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures()
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ],
               ),
             ),

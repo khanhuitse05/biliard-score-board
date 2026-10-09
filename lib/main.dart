@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'cubit/match_board_cubit.dart';
 import 'cubit/match_board_state.dart';
@@ -56,7 +55,7 @@ class _ScoreBoardAppState extends State<ScoreBoardApp>
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
         useMaterial3: true,
-        textTheme: GoogleFonts.rajdhaniTextTheme(),
+        fontFamily: 'Rajdhani',
       ),
       home: BlocProvider(
         create: (context) => MatchBoardCubit()..load(),

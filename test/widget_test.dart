@@ -17,5 +17,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('0'), findsWidgets);
+    expect(find.text('ZERO-SUM'), findsOneWidget);
+  });
+
+  testWidgets('Score change updates BalancePill to DIFF', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const ScoreBoardApp());
+    await tester.pumpAndSettle();
+
+    // Tap first player column to add score
+    await tester.tap(find.text('Player 1'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(find.text('DIFF: +1'), findsOneWidget);
   });
 }
+

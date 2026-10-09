@@ -242,12 +242,11 @@ class _CircularCountdownPainter extends CustomPainter {
   _CircularCountdownPainter({
     required this.progress,
     required this.color,
-    this.strokeWidth = 3.0,
   });
 
+  static const double strokeWidth = 3.0;
   final double progress;
   final Color color;
-  final double strokeWidth;
 
   @override
   void paint(Canvas canvas, Size size) {

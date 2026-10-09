@@ -12,6 +12,7 @@ import '../models/match.dart';
 import '../models/player.dart';
 import '../models/round.dart';
 import '../widgets/add_player_sheet.dart';
+import '../widgets/balance_pill.dart';
 import '../widgets/lock_button.dart';
 import '../widgets/lock_toast.dart';
 import '../widgets/options_sheet.dart';
@@ -242,6 +243,30 @@ class _MatchContentState extends State<_MatchContent>
   int get _currentRoundIndex =>
       match.rounds.isEmpty ? 1 : match.rounds.last.index;
 
+  int get _currentRoundTotal =>
+      match.rounds.isEmpty ? 0 : match.rounds.last.roundTotal;
+
+  bool get _currentRoundHasChanges =>
+      match.rounds.isNotEmpty &&
+      match.rounds.last.entries.any((e) => e.delta != 0);
+
+  void _onBalancePillTap() {
+    if (!_currentRoundHasChanges) {
+      showToast(context, 'Zero-sum mode: round scores must sum to 0.');
+    } else if (_currentRoundTotal != 0) {
+      final total = _currentRoundTotal;
+      final sign = total > 0 ? '+$total' : '$total';
+      final needed = -total;
+      final neededSign = needed > 0 ? '+$needed' : '$needed';
+      showToast(
+        context,
+        'Round difference: $sign (need $neededSign to balance).',
+      );
+    } else {
+      showToast(context, 'Round is balanced! Auto-advancing in 5s.');
+    }
+  }
+
   Future<void> _resetMatch(BuildContext context) async {
     final confirmed = await ResetMatchDialog.show(context);
 
@@ -377,33 +402,44 @@ class _MatchContentState extends State<_MatchContent>
               bottom: false,
               child: Padding(
                 padding: const EdgeInsets.all(8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
                     Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        RoundButton(
-                          roundIndex: _currentRoundIndex,
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            _showRoundHistory(context);
-                          },
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            RoundButton(
+                              roundIndex: _currentRoundIndex,
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                _showRoundHistory(context);
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            _circleIconButton(
+                              icon: Icons.more_vert,
+                              onTap: () => _showOptionsSheet(context),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        _circleIconButton(
-                          icon: Icons.more_vert,
-                          onTap: () => _showOptionsSheet(context),
+                        LockButton(
+                          isLocked: _isLocked,
+                          isCountingDown: _isCountingDown,
+                          resetTrigger: _countdownResetTrigger,
+                          flickerTrigger: _lockFlickerTrigger,
+                          onTap: _toggleLock,
+                          onCountdownComplete: _onCountdownComplete,
                         ),
                       ],
                     ),
-                    LockButton(
-                      isLocked: _isLocked,
+                    BalancePill(
+                      roundTotal: _currentRoundTotal,
+                      hasChanges: _currentRoundHasChanges,
                       isCountingDown: _isCountingDown,
-                      resetTrigger: _countdownResetTrigger,
-                      flickerTrigger: _lockFlickerTrigger,
-                      onTap: _toggleLock,
-                      onCountdownComplete: _onCountdownComplete,
+                      onTap: _onBalancePillTap,
                     ),
                   ],
                 ),
