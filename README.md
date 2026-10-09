@@ -59,6 +59,29 @@ flutter run
 
 Supports iOS, Android, macOS, and web.
 
+### Web
+
+Run locally in Chrome:
+
+```bash
+flutter run -d chrome
+```
+
+Build for GitHub Pages:
+
+```bash
+flutter build web --release --base-href /biliard-score-board/
+```
+
+### Deployment (GitHub Pages)
+
+The repository includes an automated GitHub Actions workflow ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)) that deploys the web app on every push to `main`.
+
+To enable GitHub Pages:
+1. Open the repository on GitHub and navigate to **Settings** > **Pages**.
+2. Under **Build and deployment** -> **Source**, select **GitHub Actions**.
+3. Push to `main` (or run the workflow manually via the **Actions** tab) to deploy to `https://khanhuitse05.github.io/biliard-score-board/`.
+
 ### Project structure
 
 - `lib/` — App code (screens, widgets, cubit, models)
