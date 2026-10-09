@@ -355,6 +355,7 @@ class _MatchContentState extends State<_MatchContent>
       isRoundInvalid: _isRoundInvalid,
       locked: _isLocked,
       onTapPlus: () => _changeScore(context, player, 1),
+      onTapMinus: () => _changeScore(context, player, -1),
       onSwipeDelta: (delta) => _changeScore(context, player, delta),
       onLongPress: () => _openPlayerSheet(context, player: player),
     );

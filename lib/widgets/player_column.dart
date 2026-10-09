@@ -12,6 +12,7 @@ class PlayerColumn extends StatefulWidget {
     required this.lastDelta,
     this.scoreGroup,
     this.onTapPlus,
+    this.onTapMinus,
     this.onSwipeDelta,
     this.onLongPress,
     this.isRoundInvalid = false,
@@ -23,6 +24,7 @@ class PlayerColumn extends StatefulWidget {
   final int lastDelta;
   final AutoSizeGroup? scoreGroup;
   final VoidCallback? onTapPlus;
+  final VoidCallback? onTapMinus;
   final ValueChanged<int>? onSwipeDelta;
   final VoidCallback? onLongPress;
   final bool isRoundInvalid;
@@ -98,6 +100,13 @@ class _PlayerColumnState extends State<PlayerColumn>
     cb();
   }
 
+  void _handleSecondaryTap() {
+    final cb = widget.onTapMinus;
+    if (cb == null) return;
+    HapticFeedback.mediumImpact();
+    cb();
+  }
+
   @override
   Widget build(BuildContext context) {
     final baseColor = widget.player.color;
@@ -126,7 +135,9 @@ class _PlayerColumnState extends State<PlayerColumn>
           );
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: _handleTap,
+      onSecondaryTap: widget.onTapMinus == null ? null : _handleSecondaryTap,
       onLongPress: widget.onLongPress,
       onVerticalDragEnd: widget.onSwipeDelta == null
           ? null

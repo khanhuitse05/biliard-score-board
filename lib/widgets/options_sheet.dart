@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 class OptionsSheet extends StatelessWidget {
   const OptionsSheet({
     super.key,
-    required this.onAddPlayer,
+    this.onAddPlayer,
     required this.onResetMatch,
     required this.onNewMatch,
     required this.onNewRace,
@@ -12,7 +12,7 @@ class OptionsSheet extends StatelessWidget {
     this.isRaceMode = false,
   });
 
-  final VoidCallback onAddPlayer;
+  final VoidCallback? onAddPlayer;
   final VoidCallback onResetMatch;
   final VoidCallback onNewMatch;
   final VoidCallback onNewRace;
@@ -33,29 +33,22 @@ class OptionsSheet extends StatelessWidget {
                 'Options',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: isRaceMode ? Colors.white : null,
                     ),
               ),
             ),
-            if (!isRaceMode)
+            if (!isRaceMode && onAddPlayer != null)
               ListTile(
                 leading: const Icon(Icons.person_add),
                 title: const Text('Add new player'),
                 onTap: () {
                   HapticFeedback.selectionClick();
                   Navigator.of(context).pop();
-                  onAddPlayer();
+                  onAddPlayer!();
                 },
               ),
             ListTile(
-              leading: Icon(
-                Icons.sports_esports_rounded,
-                color: isRaceMode ? const Color(0xFFD4AF37) : null,
-              ),
-              title: Text(
-                'New Race',
-                style: TextStyle(color: isRaceMode ? Colors.white : null),
-              ),
+              leading: const Icon(Icons.sports_esports_rounded),
+              title: const Text('New Race'),
               onTap: () {
                 HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
@@ -63,14 +56,8 @@ class OptionsSheet extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(
-                Icons.add,
-                color: isRaceMode ? const Color(0xFFD4AF37) : null,
-              ),
-              title: Text(
-                'Đánh Đền',
-                style: TextStyle(color: isRaceMode ? Colors.white : null),
-              ),
+              leading: const Icon(Icons.add),
+              title: const Text('Đánh Đền'),
               onTap: () {
                 HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
@@ -78,14 +65,8 @@ class OptionsSheet extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(
-                Icons.restart_alt,
-                color: isRaceMode ? const Color(0xFFD4AF37) : null,
-              ),
-              title: Text(
-                'Reset match',
-                style: TextStyle(color: isRaceMode ? Colors.white : null),
-              ),
+              leading: const Icon(Icons.restart_alt),
+              title: const Text('Reset match'),
               onTap: () {
                 HapticFeedback.selectionClick();
                 Navigator.of(context).pop();
@@ -93,14 +74,8 @@ class OptionsSheet extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(
-                Icons.history,
-                color: isRaceMode ? const Color(0xFFD4AF37) : null,
-              ),
-              title: Text(
-                'Show history',
-                style: TextStyle(color: isRaceMode ? Colors.white : null),
-              ),
+              leading: const Icon(Icons.history),
+              title: const Text('Show history'),
               onTap: () {
                 HapticFeedback.selectionClick();
                 Navigator.of(context).pop();

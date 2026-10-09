@@ -22,6 +22,7 @@ class MatchModel {
   MatchModel({
     required this.id,
     required this.createdAt,
+    this.endedAt,
     required this.players,
     required this.rounds,
     this.gameMode = GameMode.zeroSum,
@@ -30,10 +31,36 @@ class MatchModel {
 
   final String id;
   final DateTime createdAt;
+  final DateTime? endedAt;
   final List<Player> players;
   final List<RoundModel> rounds;
   final GameMode gameMode;
   final int raceTarget;
+
+  DateTime? get effectiveEndTime {
+    if (endedAt != null) return endedAt;
+    if (raceWinner != null && rounds.isNotEmpty) {
+      return rounds.last.createdAt;
+    }
+    return null;
+  }
+
+  Duration get duration {
+    final end = effectiveEndTime ?? DateTime.now();
+    final d = end.difference(createdAt);
+    return d.isNegative ? Duration.zero : d;
+  }
+
+  String get formattedDuration {
+    final d = duration;
+    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    if (d.inHours > 0) {
+      final hours = d.inHours.toString().padLeft(2, '0');
+      return '$hours:$minutes:$seconds';
+    }
+    return '$minutes:$seconds';
+  }
 
   bool get isRaceMode => gameMode == GameMode.raceToRacks;
 
@@ -99,6 +126,8 @@ class MatchModel {
   MatchModel copyWith({
     String? id,
     DateTime? createdAt,
+    DateTime? endedAt,
+    bool clearEndedAt = false,
     List<Player>? players,
     List<RoundModel>? rounds,
     GameMode? gameMode,
@@ -107,6 +136,7 @@ class MatchModel {
     return MatchModel(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
+      endedAt: clearEndedAt ? null : (endedAt ?? this.endedAt),
       players: players ?? this.players,
       rounds: rounds ?? this.rounds,
       gameMode: gameMode ?? this.gameMode,
@@ -118,6 +148,7 @@ class MatchModel {
     return {
       'id': id,
       'createdAt': createdAt.toIso8601String(),
+      if (endedAt != null) 'endedAt': endedAt!.toIso8601String(),
       'players': players.map((p) => p.toJson()).toList(growable: false),
       'rounds': rounds.map((r) => r.toJson()).toList(growable: false),
       'gameMode': gameMode.name,
@@ -132,10 +163,13 @@ class MatchModel {
       orElse: () => GameMode.zeroSum,
     );
     final raceTarget = (json['raceTarget'] as num?)?.toInt() ?? 7;
+    final endedAtStr = json['endedAt'] as String?;
+    final endedAt = endedAtStr != null ? DateTime.parse(endedAtStr) : null;
 
     return MatchModel(
       id: json['id'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      endedAt: endedAt,
       players: (json['players'] as List<dynamic>)
           .map((e) => Player.fromJson(e as Map<String, dynamic>))
           .toList(),

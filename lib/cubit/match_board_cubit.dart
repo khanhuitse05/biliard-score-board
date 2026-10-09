@@ -65,14 +65,32 @@ class MatchBoardCubit extends Cubit<MatchBoardState> {
 
   Future<void> newMatch() async {
     final newMatch = MatchModel.createDefault();
-    final list = [...state.matches, newMatch];
+    final current = state.currentMatch;
+    var list = state.matches;
+    if (current != null && current.endedAt == null && current.rounds.isNotEmpty) {
+      final index = list.indexWhere((m) => m.id == current.id);
+      if (index >= 0) {
+        final sealed = current.copyWith(endedAt: current.effectiveEndTime ?? DateTime.now());
+        list = List<MatchModel>.from(list)..[index] = sealed;
+      }
+    }
+    list = [...list, newMatch];
     await _save(list);
     emit(state.copyWith(matches: list, currentMatch: newMatch));
   }
 
   Future<void> newRaceMatch({int raceTarget = 7}) async {
     final newMatch = MatchModel.createRaceDefault(raceTarget: raceTarget);
-    final list = [...state.matches, newMatch];
+    final current = state.currentMatch;
+    var list = state.matches;
+    if (current != null && current.endedAt == null && current.rounds.isNotEmpty) {
+      final index = list.indexWhere((m) => m.id == current.id);
+      if (index >= 0) {
+        final sealed = current.copyWith(endedAt: current.effectiveEndTime ?? DateTime.now());
+        list = List<MatchModel>.from(list)..[index] = sealed;
+      }
+    }
+    list = [...list, newMatch];
     await _save(list);
     emit(state.copyWith(matches: list, currentMatch: newMatch));
   }

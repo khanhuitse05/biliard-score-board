@@ -13,7 +13,6 @@ import 'lock_button.dart';
 import 'lock_toast.dart';
 import 'options_sheet.dart';
 import 'race_target_dialog.dart';
-import 'race_winner_dialog.dart';
 
 class RaceMatchContent extends StatefulWidget {
   const RaceMatchContent({
@@ -35,7 +34,6 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
   bool _isCountingDown = false;
   int _countdownResetTrigger = 0;
   int _lockFlickerTrigger = 0;
-  String? _lastAnnouncedWinnerId;
   Timer? _timer;
   Duration _elapsed = Duration.zero;
 
@@ -58,7 +56,12 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
 
   void _updateElapsed() {
     setState(() {
-      _elapsed = DateTime.now().difference(match.createdAt);
+      final endTime = match.effectiveEndTime;
+      if (endTime != null) {
+        _elapsed = endTime.difference(match.createdAt);
+      } else {
+        _elapsed = DateTime.now().difference(match.createdAt);
+      }
       if (_elapsed.isNegative) _elapsed = Duration.zero;
     });
   }
@@ -76,13 +79,14 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
   @override
   void didUpdateWidget(covariant RaceMatchContent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.match.rounds.isEmpty && _lastAnnouncedWinnerId != null) {
-      _lastAnnouncedWinnerId = null;
+    if (widget.match.id != oldWidget.match.id ||
+        widget.match.endedAt != oldWidget.match.endedAt ||
+        widget.match.rounds.length != oldWidget.match.rounds.length) {
+      _updateElapsed();
     }
     if (widget.match.id != oldWidget.match.id) {
       _isLocked = false;
       _isCountingDown = false;
-      _lastAnnouncedWinnerId = null;
     }
   }
 
@@ -124,40 +128,40 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
 
     final winner = match.raceWinner;
     if (winner != null) {
-      _showWinnerDialog(context, winner);
       return;
     }
 
-    HapticFeedback.lightImpact();
-
     final nextIndex = match.rounds.length + 1;
+    final now = DateTime.now();
     final newRound = RoundModel(
       index: nextIndex,
       entries: [RoundEntry(playerId: player.id, delta: 1)],
-      createdAt: DateTime.now(),
+      createdAt: now,
     );
 
     final updatedMatch = match.copyWith(
       rounds: [...match.rounds, newRound],
     );
-    _update(context, updatedMatch);
 
     final newScore = updatedMatch.scoreFor(player.id);
     final hasWon = newScore >= updatedMatch.raceTarget;
+
+    final finalMatch = hasWon
+        ? updatedMatch.copyWith(endedAt: now)
+        : updatedMatch;
+
+    _update(context, finalMatch);
+
+    if (hasWon) {
+      HapticFeedback.heavyImpact();
+    } else {
+      HapticFeedback.lightImpact();
+    }
 
     setState(() {
       _countdownResetTrigger++;
       _isCountingDown = !hasWon;
     });
-
-    if (hasWon) {
-      _lastAnnouncedWinnerId = player.id;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _showWinnerDialog(context, player, overrideMatch: updatedMatch);
-        }
-      });
-    }
   }
 
   void _onPlayerSwipeDown(BuildContext context, Player player) {
@@ -187,45 +191,39 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
             createdAt: rounds[i].createdAt,
           )
       ];
-      final updatedMatch = match.copyWith(rounds: reindexed);
-      _update(context, updatedMatch);
+      final updatedMatch = match.copyWith(
+        rounds: reindexed,
+        clearEndedAt: true,
+      );
+
+      final hasWinner = updatedMatch.raceWinner != null;
+      final finalMatch = hasWinner
+          ? updatedMatch.copyWith(endedAt: match.endedAt ?? DateTime.now())
+          : updatedMatch;
+      _update(context, finalMatch);
 
       setState(() {
         _countdownResetTrigger++;
-        _isCountingDown = true;
+        _isCountingDown = !hasWinner;
       });
     }
   }
 
-  void _showWinnerDialog(BuildContext context, Player winner, {MatchModel? overrideMatch}) {
-    final m = overrideMatch ?? match;
-    final loser = m.players.firstWhere(
-      (p) => p.id != winner.id,
-      orElse: () => m.players.last,
-    );
-
-    RaceWinnerDialog.show(
-      context,
-      winner: winner,
-      loser: loser,
-      winnerScore: m.scoreFor(winner.id),
-      loserScore: m.scoreFor(loser.id),
-      raceTarget: m.raceTarget,
-      onRematch: () => _rematch(context),
-      onNewRace: () => _startNewRace(context),
-    );
-  }
-
   void _rematch(BuildContext context) {
-    _lastAnnouncedWinnerId = null;
     _isLocked = false;
     _isCountingDown = false;
     _countdownResetTrigger++;
-    _update(context, match.copyWith(rounds: []));
+    _update(
+      context,
+      match.copyWith(
+        rounds: [],
+        createdAt: DateTime.now(),
+        clearEndedAt: true,
+      ),
+    );
   }
 
   void _startNewRace(BuildContext context) {
-    _lastAnnouncedWinnerId = null;
     _isLocked = false;
     _isCountingDown = false;
     _countdownResetTrigger++;
@@ -242,7 +240,12 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
       context,
       currentTarget: match.raceTarget,
       onTargetChanged: (newTarget) {
-        _update(context, match.copyWith(raceTarget: newTarget));
+        final updated = match.copyWith(raceTarget: newTarget);
+        final hasWinner = updated.raceWinner != null;
+        final finalMatch = hasWinner
+            ? (updated.endedAt != null ? updated : updated.copyWith(endedAt: DateTime.now()))
+            : updated.copyWith(clearEndedAt: true);
+        _update(context, finalMatch);
       },
     );
   }
@@ -256,11 +259,6 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF130E2A),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        side: BorderSide(color: Color(0xFF00E5FF), width: 1.5),
-      ),
       builder: (ctx) => AddPlayerSheet(
         match: match,
         player: player,
@@ -274,11 +272,6 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF130E2A),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        side: BorderSide(color: Color(0xFF00E5FF), width: 1.5),
-      ),
       builder: (ctx) => OptionsSheet(
         isRaceMode: true,
         onAddPlayer: () {},
@@ -456,9 +449,11 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
     required Player player,
     required int score,
   }) {
+    final isWinner = match.raceWinner?.id == player.id;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => _onPlayerTap(context, player),
+      onSecondaryTap: () => _onPlayerSwipeDown(context, player),
       onVerticalDragEnd: (details) {
         final velocity = details.primaryVelocity ?? 0;
         if (velocity > 0) {
@@ -486,7 +481,29 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) {
+                return ScaleTransition(
+                  scale: CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutBack,
+                  ),
+                  child: FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  ),
+                );
+              },
+              child: isWinner
+                  ? Padding(
+                      key: const ValueKey('victory_badge'),
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: _buildVictoryBadge(player),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('no_badge')),
+            ),
             // Player Name at bottom
             GestureDetector(
               onLongPress: () => _openPlayerSheet(context, player),
@@ -515,6 +532,53 @@ class _RaceMatchContentState extends State<RaceMatchContent> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildVictoryBadge(Player player) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+      decoration: BoxDecoration(
+        color: player.color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: player.color,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: player.color.withValues(alpha: 0.55),
+            blurRadius: 12,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.emoji_events_rounded,
+            color: player.color,
+            size: 16,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'VICTORY',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2.0,
+              shadows: [
+                Shadow(
+                  color: player.color.withValues(alpha: 0.8),
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
